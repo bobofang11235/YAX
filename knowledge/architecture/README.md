@@ -12,6 +12,8 @@ to edit.
   memory accounting.
 - `scheduler-batching.md`: continuous batching, chunked prefill, preemption,
   priority.
+- `scheduler-model-size-impact.md`: how scheduler behavior interacts with model
+  size (small vs medium vs large) and whether scheduling changes output.
 - `attention-backends.md`: FlashAttention/FlashInfer/Triton/ROCm backends and how
   selection works.
 

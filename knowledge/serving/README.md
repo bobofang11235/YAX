@@ -11,6 +11,9 @@ memory.
 - `features-overview.md`: what vLLM supports today and the flag to enable each.
 - `quantization.md`: weight/activation/KV quantization methods and when to use them.
 - `performance-tuning.md`: a tuning order for throughput / latency / memory.
+- `performance-factors.md`: the full catalog of levers that move performance.
+- `performance-estimation.md`: compute rough memory/throughput/TTFT numbers from
+  the model config (with `scripts/perfcalc.py`).
 
 ## Source Of Truth
 

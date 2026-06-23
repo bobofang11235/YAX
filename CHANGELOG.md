@@ -41,6 +41,17 @@ Newest first.
 
 - (pending changes go here)
 
+## 2026-06-23 — Performance analysis + estimator
+
+- vLLM synced to: **v0.23.0** (analysis/tooling only; no new upstream review)
+- Added: `knowledge/architecture/scheduler-model-size-impact.md` — how the
+  scheduler interacts with small/medium/large models and whether scheduling
+  changes output.
+- Added: `knowledge/serving/performance-factors.md` — full catalog of performance
+  levers beyond the scheduler.
+- Added: `knowledge/serving/performance-estimation.md` + `scripts/perfcalc.py` —
+  rough memory/throughput/TTFT estimates computed from a model config.
+
 ## 2026-06-23 — Version-tagged code-map indexer
 
 - vLLM synced to: **v0.23.0** (no new upstream review; tooling change only)
