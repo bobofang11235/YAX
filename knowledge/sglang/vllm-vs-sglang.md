@@ -23,7 +23,7 @@ features.
   overlap); vLLM V1 also isolates EngineCore in a process for low overhead.
 - **Engine versioning**: vLLM had a major V0→V1 internals relocation (~0.8);
   SGLang's big step was the v0.4 zero-overhead scheduler. Code maps differ
-  accordingly (`devmap/areas.jsonl` vs `devmap/sglang-areas.jsonl`).
+  accordingly (`devmap/vllm-areas.jsonl` vs `devmap/sglang-areas.jsonl`).
 - **Structured output**: SGLang pioneered fast compressed-FSM; both now support
   xgrammar/outlines.
 
@@ -76,8 +76,8 @@ features.
 
 - `knowledge/sglang/server-args.md`
 - `knowledge/sglang/radixattention.md`
-- `knowledge/serving/engine-args-reference.md` (vLLM)
-- `knowledge/serving/performance-estimation.md` (engine-agnostic)
+- `knowledge/vllm/serving/engine-args-reference.md` (vLLM)
+- `knowledge/shared/performance-estimation.md` (engine-agnostic)
 
 ## Source
 

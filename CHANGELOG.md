@@ -1,34 +1,36 @@
 # YAX Changelog
 
-This log tracks YAX content updates **and the upstream vLLM point each update
-reflects**. The machine-readable marker lives in `devmap/sync-state.json`
-(`synced_to`). To refresh knowledge next time, review only vLLM commits newer
-than the latest entry's `vLLM synced to` ref — you do not need to re-read the
+This log tracks YAX content updates **and the upstream point each engine's
+update reflects**. The machine-readable markers live in
+`devmap/<engine>-sync-state.json` (`synced_to`). To refresh knowledge, review
+only commits newer than the latest entry's synced ref — no need to re-read the
 whole history.
 
 ## How To Update YAX From Upstream
 
+For `<engine>` in {`vllm`, `sglang`}:
+
 1. Read the current marker:
    ```bash
-   python3 scripts/yax.py sync-status            # prints synced_to + the diff command
-   python3 scripts/yax.py sync-status --vllm-path <vllm-clone>   # also runs the diff
+   python3 scripts/yax.py sync-status --engine <engine>
+   python3 scripts/yax.py sync-status --engine <engine> --repo-path <clone>  # runs the diff
    ```
-2. List what changed since the last sync (clone vLLM into the workspace if absent):
+2. List what changed since the last sync (clone the engine repo if absent):
    ```bash
-   git -C <vllm-clone> fetch --tags
-   git -C <vllm-clone> log --oneline <synced_to>..origin/main
+   git -C <clone> fetch --tags
+   git -C <clone> log --oneline <synced_to>..origin/main
    ```
 3. For relevant changes, update the narrowest artifact:
-   - new/renamed flags -> `knowledge/serving/engine-args-reference.md`
-   - new/renamed env vars -> `knowledge/serving/environment-variables.md`
-   - moved file paths -> add a version-bounded layout in `devmap/areas.jsonl`
-   - new features -> `knowledge/serving/features-overview.md`
-4. Bump `synced_to` / `synced_on` in `devmap/sync-state.json` to the new ref.
+   - new/renamed flags -> `knowledge/<engine>/...` serving/server-args note
+   - new/renamed env vars -> the engine's environment-variables note
+   - moved file paths -> add a version-bounded layout in `devmap/<engine>-areas.jsonl`
+   - new features -> the engine's features-overview note
+4. Bump `synced_to` / `synced_on` in `devmap/<engine>-sync-state.json`.
 5. Regenerate + verify:
    ```bash
    python3 scripts/yax.py index && python3 scripts/yax.py validate && python3 scripts/yax.py eval
    ```
-6. Add a dated entry below with `vLLM synced to: <ref>`.
+6. Add a dated entry below with `<engine> synced to: <ref>`.
 
 ## Format
 
@@ -40,6 +42,18 @@ Newest first.
 ## [Unreleased]
 
 - (pending changes go here)
+
+## 2026-06-23 — Symmetric multi-engine structure
+
+- Reorganized for engine symmetry: `knowledge/{vllm,sglang,shared}`,
+  `tools/{vllm,sglang}`, `workflows/{vllm,sglang}`. Moved engine-agnostic
+  perf-estimation/perf-factors notes to `knowledge/shared/`.
+- Uniform code-map filenames: `devmap/<engine>-areas.jsonl` (renamed the vLLM
+  files from the unprefixed names) and `registry/<engine>-codemap-by-version.json`.
+- Simplified `scripts/yax.py` engine resolution to uniform per-engine paths; all
+  navigation READMEs (root, knowledge, tools, workflows, devmap, index) updated to
+  present vLLM and SGLang equally.
+- All file moves done with `git mv` (history preserved); validate + eval still PASS.
 
 ## 2026-06-23 — Add SGLang as a second engine
 
@@ -56,23 +70,23 @@ Newest first.
 ## 2026-06-23 — Performance analysis + estimator
 
 - vLLM synced to: **v0.23.0** (analysis/tooling only; no new upstream review)
-- Added: `knowledge/architecture/scheduler-model-size-impact.md` — how the
+- Added: `knowledge/vllm/architecture/scheduler-model-size-impact.md` — how the
   scheduler interacts with small/medium/large models and whether scheduling
   changes output.
-- Added: `knowledge/serving/performance-factors.md` — full catalog of performance
+- Added: `knowledge/shared/performance-factors.md` — full catalog of performance
   levers beyond the scheduler.
-- Added: `knowledge/serving/performance-estimation.md` + `scripts/perfcalc.py` —
+- Added: `knowledge/shared/performance-estimation.md` + `scripts/perfcalc.py` —
   rough memory/throughput/TTFT estimates computed from a model config.
 
 ## 2026-06-23 — Version-tagged code-map indexer
 
 - vLLM synced to: **v0.23.0** (no new upstream review; tooling change only)
-- Added: `devmap/areas.jsonl` (30 version-tagged code-map areas) and
-  `devmap/versions.json`.
+- Added: `devmap/vllm-areas.jsonl` (30 version-tagged code-map areas) and
+  `devmap/vllm-versions.json`.
 - Added: `scripts/yax.py where` — version-aware "which folders/files to
   check/edit" indexer; `codemap-index` generation to
-  `registry/codemap-by-version.json`; staleness check in `validate`.
-- Added: `knowledge/development/codebase-map.md`.
+  `registry/vllm-codemap-by-version.json`; staleness check in `validate`.
+- Added: `knowledge/vllm/development/codebase-map.md`.
 
 ## 2026-06-23 — Initial vLLM knowledge base
 

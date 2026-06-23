@@ -8,11 +8,12 @@ map is per engine via `--engine`.
 
 ## Retrieval Order
 
-1. For unfamiliar or non-trivial vLLM tasks, run
-   `python3 scripts/yax.py recommend "<task>"`.
+1. For unfamiliar or non-trivial tasks (vLLM or SGLang), run
+   `python3 scripts/yax.py recommend "<task>"`. Name the engine in the query.
 2. Read the top-ranked workflow first when one matches.
 3. Read only the tool cards referenced by that workflow or recommendation.
-4. Read linked `knowledge/` notes only when deeper background is needed.
+4. Read linked `knowledge/<engine>/` or `knowledge/shared/` notes only when
+   deeper background is needed.
 5. Read `capture/` only when raw evidence or task history is required.
 
 ## Common Routes
@@ -22,28 +23,34 @@ map is per engine via `--engine`.
 - Tool / workflow catalogs:
   `tools/README.md`, `workflows/README.md`
 - vLLM architecture and request lifecycle (V1 engine, scheduler, KV cache):
-  `knowledge/architecture/README.md`
+  `knowledge/vllm/architecture/README.md`
 - Engine arguments (`EngineArgs` / `vllm serve` flags):
-  `knowledge/serving/engine-args-reference.md`
+  `knowledge/vllm/serving/engine-args-reference.md`
 - Environment variables (`VLLM_*` and runtime knobs):
-  `knowledge/serving/environment-variables.md`
+  `knowledge/vllm/serving/environment-variables.md`
 - What features exist today (quantization, spec decode, LoRA, structured output):
-  `knowledge/serving/features-overview.md`
+  `knowledge/vllm/serving/features-overview.md`
 - Throughput / latency / memory tuning:
-  `knowledge/serving/performance-tuning.md`
+  `knowledge/vllm/serving/performance-tuning.md`
 - ROCm / AMD GPU build and tuning:
-  `knowledge/rocm/rocm-setup-and-tuning.md`
+  `knowledge/vllm/rocm/rocm-setup-and-tuning.md`
 - CUDA / NVIDIA GPU build and tuning:
-  `knowledge/cuda/cuda-setup-and-tuning.md`
+  `knowledge/vllm/cuda/cuda-setup-and-tuning.md`
 - How to edit the codebase, build from source, add a model, run tests:
-  `knowledge/development/README.md`
+  `knowledge/vllm/development/README.md`
+- Engine-agnostic performance estimation (roofline) and factors:
+  `knowledge/shared/README.md`
+- SGLang hub (architecture, RadixAttention, server args, env, DSL, vs vLLM):
+  `knowledge/sglang/README.md`
+- SGLang server args / performance / RadixAttention specifically:
+  `knowledge/sglang/server-args.md`, `knowledge/sglang/performance-tuning.md`,
+  `knowledge/sglang/radixattention.md`
 - Which folders/files to check or edit for a problem (version-aware code map):
   `python3 scripts/yax.py where "<problem>" -V <version>` (add `--engine sglang`
-  for SGLang) and `knowledge/development/codebase-map.md`
-- SGLang (architecture, RadixAttention, server args, env, DSL, vs vLLM):
-  `knowledge/sglang/README.md`
-- What vLLM version YAX reflects + how to pull newer changes:
-  `python3 scripts/yax.py sync-status`, `CHANGELOG.md`, `devmap/sync-state.json`
+  for SGLang) and `knowledge/vllm/development/codebase-map.md`
+- Which engine version YAX reflects + how to pull newer changes:
+  `python3 scripts/yax.py sync-status -e <engine>`, `CHANGELOG.md`,
+  `devmap/<engine>-sync-state.json`
 - Understanding the repository design:
   `README.md`
 - Maintaining YAX itself:
@@ -79,22 +86,27 @@ python3 scripts/yax.py where "<problem>" --engine sglang -V 0.5.13 # SGLang
 
 It returns the folders/files/entry-points for that engine+version's layout
 (vLLM V0/V1 and SGLang pre/post-0.4 relocations handled automatically). Confirm
-exact paths against the checkout. Add or fix areas in `devmap/areas.jsonl`
+exact paths against the checkout. Add or fix areas in `devmap/vllm-areas.jsonl`
 (vLLM) or `devmap/sglang-areas.jsonl` and rerun `python3 scripts/yax.py index`
 when a path has moved.
 
-## vLLM Engineering Rules
+## Engine Engineering Rules
 
-- **Pin the environment.** Record vLLM version/commit, PyTorch, CUDA or ROCm,
+- **Pin the environment.** Record engine version/commit, PyTorch, CUDA or ROCm,
   driver, GPU arch (SM_xx or gfxNNN). Behavior and flags are version-sensitive.
-- **Confirm flags at the source.** Names come from `vllm/engine/arg_utils.py`
-  (args) and `vllm/envs.py` (env vars). Verify with `vllm serve --help` on the
-  installed version before relying on a flag.
+- **Confirm flags at the source.**
+  - vLLM: `vllm/engine/arg_utils.py` (args), `vllm/envs.py` (env);
+    `vllm serve --help`.
+  - SGLang: `python/sglang/srt/server_args.py` (args),
+    `python/sglang/srt/environ.py` (env); `python -m sglang.launch_server --help`.
+- **Don't copy flags across engines.** Translate intent via
+  `knowledge/sglang/vllm-vs-sglang.md` (e.g. `--gpu-memory-utilization` ⇄
+  `--mem-fraction-static`).
 - **Separate correctness from performance.** Fix accuracy/divergence first with a
   trusted baseline, then tune throughput/latency.
 - **Validate with evidence.** A serving or kernel change is not done until a
-  benchmark (`vllm bench serve` / `benchmarks/`), an accuracy check, or the
-  relevant `pytest` has run, or the gap is recorded.
+  benchmark (`vllm bench serve` / `python -m sglang.bench_serving`), an accuracy
+  check, or the relevant test has run, or the gap is recorded.
 - **Isolate the variable in A/B work.** Change one of {dtype, kv-cache-dtype,
   attention backend, quantization, TP/PP, batch size} at a time.
 - **Treat ROCm vs CUDA divergence as backend work** unless evidence shows a
@@ -103,8 +115,8 @@ when a path has moved.
 ## Related Repo Rules
 
 - Record related repositories by GitHub URL, not a host-specific checkout path.
-- If vLLM is needed locally but absent, clone it into the workspace first, then
-  use repo-relative paths from that clone.
+- If vLLM (`vllm-project/vllm`) or SGLang (`sgl-project/sglang`) is needed locally
+  but absent, clone it into the workspace first, then use repo-relative paths.
 
 ## Maintenance Rules
 
@@ -121,7 +133,10 @@ When developing YAX itself:
 9. Run `python3 scripts/yax.py validate` after structural changes.
 10. Run `python3 scripts/yax.py eval` after changing card metadata or evals;
     confirm the target query improved and no other case regressed.
-11. When syncing knowledge to a newer vLLM: start from
-    `python3 scripts/yax.py sync-status`, review only commits newer than
-    `synced_to`, then bump `devmap/sync-state.json` and add a `CHANGELOG.md`
-    entry recording the new `vLLM synced to` ref.
+11. When syncing knowledge to a newer engine release: start from
+    `python3 scripts/yax.py sync-status -e <engine>`, review only commits newer
+    than `synced_to`, then bump `devmap/<engine>-sync-state.json` and add a
+    `CHANGELOG.md` entry recording the new `synced to` ref.
+12. Keep the engine namespaces symmetric: engine-specific content under
+    `knowledge/<engine>/`, `tools/<engine>/`, `workflows/<engine>/`,
+    `devmap/<engine>-*`; cross-engine content under `knowledge/shared/`.

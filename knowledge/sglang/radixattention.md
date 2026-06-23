@@ -62,7 +62,7 @@ Why a tree helps beyond simple prefix caching:
 - `knowledge/sglang/architecture.md`
 - `knowledge/sglang/performance-tuning.md`
 - `knowledge/sglang/vllm-vs-sglang.md`
-- `knowledge/architecture/paged-attention-kv-cache.md` (vLLM comparison)
+- `knowledge/vllm/architecture/paged-attention-kv-cache.md` (vLLM comparison)
 
 ## Source
 

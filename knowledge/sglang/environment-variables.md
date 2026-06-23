@@ -56,7 +56,7 @@ reading `srt/environ.py`.)
 
 - `knowledge/sglang/server-args.md`
 - `knowledge/sglang/performance-tuning.md`
-- `knowledge/serving/environment-variables.md` (vLLM comparison)
+- `knowledge/vllm/serving/environment-variables.md` (vLLM comparison)
 
 ## Source
 

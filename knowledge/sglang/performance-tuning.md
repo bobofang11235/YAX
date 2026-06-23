@@ -65,8 +65,8 @@ differ. Tune one thing at a time and re-benchmark.
 
 - `knowledge/sglang/radixattention.md`
 - `knowledge/sglang/server-args.md`
-- `knowledge/serving/performance-estimation.md` (engine-agnostic roofline)
-- `knowledge/serving/performance-factors.md`
+- `knowledge/shared/performance-estimation.md` (engine-agnostic roofline)
+- `knowledge/shared/performance-factors.md`
 
 ## Source
 

@@ -21,7 +21,7 @@
       "outputs": [
         "the first divergent variable and a corrected config"
       ],
-      "path": "tools/debugging/accuracy-divergence.md",
+      "path": "tools/vllm/debugging/accuracy-divergence.md",
       "ref": "tool:accuracy-divergence",
       "related": [
         "workflow:debug-accuracy",
@@ -30,13 +30,13 @@
       "sections": {
         "Constraints": "- Fix accuracy before any performance tuning.",
         "How To Use": "1. Establish a trusted reference (HF Transformers greedy, or fp16 vLLM on a known GPU). 2. Bisect one variable at a time, in this order: - dtype (bf16/fp16) before any quantization; - quantization method/kernel (drop `-q`, try fp16); - KV c...",
-        "Related": "- `knowledge/serving/quantization.md` - `knowledge/rocm/rocm-fp8-formats.md` - `knowledge/architecture/attention-backends.md`",
-        "Source": "- `knowledge/serving/quantization.md`",
+        "Related": "- `knowledge/vllm/serving/quantization.md` - `knowledge/vllm/rocm/rocm-fp8-formats.md` - `knowledge/vllm/architecture/attention-backends.md`",
+        "Source": "- `knowledge/vllm/serving/quantization.md`",
         "Use When": "Use when output is wrong, gibberish, or measurably worse than a trusted baseline.",
         "Validation": "- Greedy output matches the reference within tolerance once the variable is fixed."
       },
       "source": [
-        "knowledge/serving/quantization.md"
+        "knowledge/vllm/serving/quantization.md"
       ],
       "status": "active",
       "tags": [
@@ -79,7 +79,7 @@
       "outputs": [
         "a registered vLLM model passing a greedy logit A-B vs HF"
       ],
-      "path": "tools/development/add-new-model.md",
+      "path": "tools/vllm/development/add-new-model.md",
       "ref": "tool:add-new-model",
       "related": [
         "workflow:serve-new-model",
@@ -88,13 +88,13 @@
       "sections": {
         "Constraints": "- Reuse vLLM layers so TP/quantization/backends work without extra code.",
         "How To Use": "1. Confirm it is missing in `vllm/model_executor/models/registry.py`. 2. Copy the closest existing model file as a starting point. 3. Implement the module reusing vLLM `Attention`/parallel-linear/MoE layers; get `load_weights` name-mapping...",
-        "Related": "- `knowledge/development/adding-a-model.md` - `tool:build-from-source`",
-        "Source": "- `knowledge/development/adding-a-model.md`",
+        "Related": "- `knowledge/vllm/development/adding-a-model.md` - `tool:build-from-source`",
+        "Source": "- `knowledge/vllm/development/adding-a-model.md`",
         "Use When": "Use when vLLM errors on an unsupported architecture or you must port a model.",
         "Validation": "- Greedy logits/output match HF Transformers within tolerance on fixed prompts. - Tensor-parallel run produces identical output to single-GPU."
       },
       "source": [
-        "knowledge/development/adding-a-model.md"
+        "knowledge/vllm/development/adding-a-model.md"
       ],
       "status": "active",
       "tags": [
@@ -136,7 +136,7 @@
       "outputs": [
         "tokens/s, TTFT, ITL/TPOT, and preemption observations"
       ],
-      "path": "tools/serving/benchmark-serving.md",
+      "path": "tools/vllm/serving/benchmark-serving.md",
       "ref": "tool:benchmark-serving",
       "related": [
         "workflow:optimize-throughput",
@@ -145,13 +145,13 @@
       "sections": {
         "Constraints": "- Backend, dtype, and version all change numbers; fix them when comparing.",
         "How To Use": "1. Pick a realistic input/output length distribution and request rate. 2. Run `vllm bench serve` (or `benchmarks/benchmark_serving.py`) against the endpoint; for offline throughput use `vllm bench throughput`. 3. Record: output tokens/s, TT...",
-        "Related": "- `knowledge/serving/performance-tuning.md` - `tool:tune-serving-config`",
-        "Source": "- `knowledge/serving/performance-tuning.md`",
+        "Related": "- `knowledge/vllm/serving/performance-tuning.md` - `tool:tune-serving-config`",
+        "Source": "- `knowledge/vllm/serving/performance-tuning.md`",
         "Use When": "Use to get evidence before/after any performance or config change. Never tune by guesswork.",
         "Validation": "- Results are reproducible across two runs (variance understood). - Environment (arch/version/backend/flags) recorded with every number."
       },
       "source": [
-        "knowledge/serving/performance-tuning.md"
+        "knowledge/vllm/serving/performance-tuning.md"
       ],
       "status": "active",
       "tags": [
@@ -193,7 +193,7 @@
       "outputs": [
         "an importable editable vLLM with a smoke-tested launch"
       ],
-      "path": "tools/development/build-from-source.md",
+      "path": "tools/vllm/development/build-from-source.md",
       "ref": "tool:build-from-source",
       "related": [
         "workflow:contribute-feature",
@@ -202,13 +202,13 @@
       "sections": {
         "Constraints": "- Full compile needs the GPU toolchain; precompiled path needs a compatible prebuilt.",
         "How To Use": "1. Clone: `git clone https://github.com/vllm-project/vllm`. 2. Python-only edits (fast): `VLLM_USE_PRECOMPILED=1 pip install -e .`. 3. Kernel (`csrc/`) edits: `pip install -e .` (full CMake compile); bound memory with `MAX_JOBS`. 4. ROCm: b...",
-        "Related": "- `knowledge/development/repo-layout-and-build.md` - `knowledge/development/contributing-and-testing.md`",
-        "Source": "- `knowledge/development/repo-layout-and-build.md`",
+        "Related": "- `knowledge/vllm/development/repo-layout-and-build.md` - `knowledge/vllm/development/contributing-and-testing.md`",
+        "Source": "- `knowledge/vllm/development/repo-layout-and-build.md`",
         "Use When": "Use before editing vLLM, to get an editable install that matches the environment.",
         "Validation": "- `import vllm` works and a minimal serve responds. - PyTorch/CUDA(ROCm) versions match the checkout's expectations."
       },
       "source": [
-        "knowledge/development/repo-layout-and-build.md"
+        "knowledge/vllm/development/repo-layout-and-build.md"
       ],
       "status": "active",
       "tags": [
@@ -251,7 +251,7 @@
       "outputs": [
         "a running /v1 endpoint plus a verification curl"
       ],
-      "path": "tools/serving/launch-openai-server.md",
+      "path": "tools/vllm/serving/launch-openai-server.md",
       "ref": "tool:launch-openai-server",
       "related": [
         "workflow:serve-new-model",
@@ -260,13 +260,13 @@
       "sections": {
         "Constraints": "- Set `VLLM_*` env vars before launch (backend, ROCm/CUDA knobs). - Flag names are version-sensitive; verify against `--help`.",
         "How To Use": "1. Minimal launch: `vllm serve <model> --tensor-parallel-size <gpus>`. 2. Add only the flags a constraint requires: - context: `--max-model-len <N>` - memory: `--gpu-memory-utilization 0.90`, `--kv-cache-dtype fp8` - naming/auth: `--served-...",
-        "Related": "- `knowledge/serving/engine-args-reference.md` - `tool:tune-serving-config`",
-        "Source": "- `knowledge/serving/engine-args-reference.md`",
+        "Related": "- `knowledge/vllm/serving/engine-args-reference.md` - `tool:tune-serving-config`",
+        "Source": "- `knowledge/vllm/serving/engine-args-reference.md`",
         "Use When": "Use to bring up a model behind the OpenAI-compatible API with sane defaults.",
         "Validation": "- `/v1/models` lists the model and a chat/completion returns tokens. - No preemption or \"cannot fit max_model_len\" warnings in the startup log."
       },
       "source": [
-        "knowledge/serving/engine-args-reference.md"
+        "knowledge/vllm/serving/engine-args-reference.md"
       ],
       "status": "active",
       "tags": [
@@ -366,7 +366,7 @@
       "outputs": [
         "a fix (flag/env change) and the reasoning"
       ],
-      "path": "tools/debugging/oom-kv-triage.md",
+      "path": "tools/vllm/debugging/oom-kv-triage.md",
       "ref": "tool:oom-kv-triage",
       "related": [
         "workflow:debug-accuracy",
@@ -375,13 +375,13 @@
       "sections": {
         "Constraints": "- FP8 KV trades a little accuracy; validate.",
         "How To Use": "1. Classify from the log: - OOM at load \u2192 lower `--gpu-memory-utilization`, quantize, or add GPUs. - \"cannot fit max_model_len\" \u2192 KV pool too small: lower `--max-model-len`, `--kv-cache-dtype fp8`, or raise utilization with headroom. - \"Seq...",
-        "Related": "- `knowledge/architecture/paged-attention-kv-cache.md` - `tool:tune-serving-config`",
-        "Source": "- `knowledge/architecture/paged-attention-kv-cache.md`",
+        "Related": "- `knowledge/vllm/architecture/paged-attention-kv-cache.md` - `tool:tune-serving-config`",
+        "Source": "- `knowledge/vllm/architecture/paged-attention-kv-cache.md`",
         "Use When": "Use on OOM at startup, \"engine cannot fit max_model_len\", or throughput collapse from preemption.",
         "Validation": "- Startup shows a KV capacity >= max_model_len and no preemption under load."
       },
       "source": [
-        "knowledge/architecture/paged-attention-kv-cache.md"
+        "knowledge/vllm/architecture/paged-attention-kv-cache.md"
       ],
       "status": "active",
       "tags": [
@@ -422,7 +422,7 @@
       "outputs": [
         "a tuned flag/env set with measured improvement"
       ],
-      "path": "tools/serving/tune-serving-config.md",
+      "path": "tools/vllm/serving/tune-serving-config.md",
       "ref": "tool:tune-serving-config",
       "related": [
         "workflow:optimize-throughput",
@@ -431,13 +431,13 @@
       "sections": {
         "Constraints": "- Fix correctness before tuning; never tune around a numeric bug.",
         "How To Use": "1. State the goal: offline throughput, interactive latency, or memory fit. 2. Apply the matching order from `performance-tuning.md`: - throughput: raise `--max-num-batched-tokens`, then `--max-num-seqs`, grow KV pool, keep CUDA graphs, add...",
-        "Related": "- `knowledge/serving/performance-tuning.md` - `tool:benchmark-serving`",
-        "Source": "- `knowledge/serving/performance-tuning.md`",
+        "Related": "- `knowledge/vllm/serving/performance-tuning.md` - `tool:benchmark-serving`",
+        "Source": "- `knowledge/vllm/serving/performance-tuning.md`",
         "Use When": "Use after a baseline benchmark when throughput is low, latency high, or memory tight.",
         "Validation": "- Each accepted change is backed by a measured before/after. - Decode P99 latency still meets target after throughput changes."
       },
       "source": [
-        "knowledge/serving/performance-tuning.md"
+        "knowledge/vllm/serving/performance-tuning.md"
       ],
       "status": "active",
       "tags": [
@@ -530,12 +530,12 @@
       "inputs": [],
       "kind": "workflow",
       "outputs": [],
-      "path": "workflows/contribute-feature.md",
+      "path": "workflows/vllm/contribute-feature.md",
       "ref": "workflow:contribute-feature",
       "related": [],
       "sections": {
         "Related Runs": "-",
-        "Source": "- `knowledge/development/repo-layout-and-build.md` - `knowledge/development/contributing-and-testing.md` - `knowledge/development/custom-ops-and-platforms.md`",
+        "Source": "- `knowledge/vllm/development/repo-layout-and-build.md` - `knowledge/vllm/development/contributing-and-testing.md` - `knowledge/vllm/development/custom-ops-and-platforms.md`",
         "Tool Sequence": "- `tool:build-from-source`: editable checkout matching the environment. - `tool:add-new-model`: when the change is a new architecture. - `tool:benchmark-serving`: evidence for performance changes.",
         "Update Policy": "Update when a recurring contribution pattern or check should be standardized.",
         "Use When": "Use to make a code change in vLLM and prepare it for review.",
@@ -543,7 +543,7 @@
         "Workflow": "1. Locate the right layer (engine/scheduler/model/attention/platform) using the architecture and repo-layout notes. 2. Set up an editable build with `tool:build-from-source` (precompiled path for Python-only edits; full compile for `csrc/`)..."
       },
       "source": [
-        "knowledge/development/repo-layout-and-build.md"
+        "knowledge/vllm/development/repo-layout-and-build.md"
       ],
       "status": "active",
       "tags": [
@@ -590,12 +590,12 @@
       "inputs": [],
       "kind": "workflow",
       "outputs": [],
-      "path": "workflows/debug-accuracy.md",
+      "path": "workflows/vllm/debug-accuracy.md",
       "ref": "workflow:debug-accuracy",
       "related": [],
       "sections": {
         "Related Runs": "-",
-        "Source": "- `knowledge/serving/quantization.md` - `knowledge/rocm/rocm-fp8-formats.md` - `knowledge/architecture/attention-backends.md`",
+        "Source": "- `knowledge/vllm/serving/quantization.md` - `knowledge/vllm/rocm/rocm-fp8-formats.md` - `knowledge/vllm/architecture/attention-backends.md`",
         "Tool Sequence": "- `tool:accuracy-divergence`: structured one-variable bisection. - `tool:add-new-model`: when a ported model's weight mapping is suspect.",
         "Update Policy": "Update when a recurring divergence cause (e.g. a specific backend/quant combo) should be promoted into the bisection order.",
         "Use When": "Use when output quality is wrong or has regressed and you must find the cause.",
@@ -603,7 +603,7 @@
         "Workflow": "1. Establish a trusted reference (HF Transformers greedy, or fp16 vLLM on a known GPU). 2. Use `tool:accuracy-divergence` to bisect one variable at a time: dtype \u2192 quantization \u2192 KV dtype \u2192 attention backend \u2192 platform FP8 format. 3. If the..."
       },
       "source": [
-        "knowledge/serving/quantization.md"
+        "knowledge/vllm/serving/quantization.md"
       ],
       "status": "active",
       "tags": [
@@ -649,12 +649,12 @@
       "inputs": [],
       "kind": "workflow",
       "outputs": [],
-      "path": "workflows/optimize-throughput.md",
+      "path": "workflows/vllm/optimize-throughput.md",
       "ref": "workflow:optimize-throughput",
       "related": [],
       "sections": {
         "Related Runs": "-",
-        "Source": "- `knowledge/serving/performance-tuning.md` - `knowledge/architecture/scheduler-batching.md`",
+        "Source": "- `knowledge/vllm/serving/performance-tuning.md` - `knowledge/vllm/architecture/scheduler-batching.md`",
         "Tool Sequence": "- `tool:benchmark-serving`: baseline and per-step measurement. - `tool:tune-serving-config`: pick and apply the next knob. - `tool:oom-kv-triage`: clear memory walls hit while scaling batch.",
         "Update Policy": "Update when a new knob, platform booster, or tuning order proves better.",
         "Use When": "Use to improve tokens/s, TTFT, or ITL with measured evidence rather than guesses.",
@@ -662,7 +662,7 @@
         "Workflow": "1. Define the goal: offline throughput, interactive latency, or memory fit. 2. Establish a baseline with `tool:benchmark-serving`. 3. Apply one knob with `tool:tune-serving-config` following the tuning order. 4. Re-benchmark; keep the chang..."
       },
       "source": [
-        "knowledge/serving/performance-tuning.md"
+        "knowledge/vllm/serving/performance-tuning.md"
       ],
       "status": "active",
       "tags": [
@@ -709,12 +709,12 @@
       "inputs": [],
       "kind": "workflow",
       "outputs": [],
-      "path": "workflows/rocm-bringup.md",
+      "path": "workflows/vllm/rocm-bringup.md",
       "ref": "workflow:rocm-bringup",
       "related": [],
       "sections": {
         "Related Runs": "-",
-        "Source": "- `knowledge/rocm/rocm-setup-and-tuning.md` - `knowledge/rocm/rocm-fp8-formats.md`",
+        "Source": "- `knowledge/vllm/rocm/rocm-setup-and-tuning.md` - `knowledge/vllm/rocm/rocm-fp8-formats.md`",
         "Tool Sequence": "- `tool:build-from-source`: ROCm editable build when needed. - `tool:accuracy-divergence`: isolate ROCm-only correctness issues. - `tool:benchmark-serving` + `tool:tune-serving-config`: performance.",
         "Update Policy": "Update when a new ROCm version pairing, AITER toggle, or failure mode recurs.",
         "Use When": "Use to get a model correct and fast on AMD GPUs, or to triage a CUDA-vs-ROCm divergence.",
@@ -722,7 +722,7 @@
         "Workflow": "1. Use the pinned ROCm container (or `Dockerfile.rocm`); confirm `torch.version.hip` and `HIP_VISIBLE_DEVICES`. If building, use `tool:build-from-source`. 2. Serve and verify correctness first; if ROCm-only divergence appears, use `tool:acc..."
       },
       "source": [
-        "knowledge/rocm/rocm-setup-and-tuning.md"
+        "knowledge/vllm/rocm/rocm-setup-and-tuning.md"
       ],
       "status": "active",
       "tags": [
@@ -770,12 +770,12 @@
       "inputs": [],
       "kind": "workflow",
       "outputs": [],
-      "path": "workflows/serve-new-model.md",
+      "path": "workflows/vllm/serve-new-model.md",
       "ref": "workflow:serve-new-model",
       "related": [],
       "sections": {
         "Related Runs": "-",
-        "Source": "- `knowledge/serving/engine-args-reference.md` - `knowledge/serving/features-overview.md`",
+        "Source": "- `knowledge/vllm/serving/engine-args-reference.md` - `knowledge/vllm/serving/features-overview.md`",
         "Tool Sequence": "- `tool:add-new-model`: only when the architecture is unsupported. - `tool:launch-openai-server`: start the endpoint. - `tool:oom-kv-triage`: resolve memory/KV startup failures.",
         "Update Policy": "Update when a recurring launch flag, model quirk, or startup failure pattern appears.",
         "Use When": "Use to bring a model up on the OpenAI-compatible endpoint, including models vLLM does not yet support.",
@@ -783,7 +783,7 @@
         "Workflow": "1. Check support: is the architecture in the model registry? If not, use `tool:add-new-model` first. 2. Launch minimally with `tool:launch-openai-server` (`vllm serve <model> -tp <gpus>`); add only required flags. 3. If startup OOMs or warn..."
       },
       "source": [
-        "knowledge/serving/engine-args-reference.md"
+        "knowledge/vllm/serving/engine-args-reference.md"
       ],
       "status": "active",
       "tags": [
@@ -828,7 +828,7 @@
       "inputs": [],
       "kind": "workflow",
       "outputs": [],
-      "path": "workflows/serve-sglang-model.md",
+      "path": "workflows/sglang/serve-sglang-model.md",
       "ref": "workflow:serve-sglang-model",
       "related": [],
       "sections": {

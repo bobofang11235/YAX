@@ -24,20 +24,13 @@ REGISTRY_PATH = ROOT / "registry" / "toolbox-index.json"
 ABSTENTIONS_PATH = ROOT / "capture" / "abstentions.jsonl"
 BASELINE_PATH = ROOT / "evals" / "baseline.json"
 DEVMAP_DIR = ROOT / "devmap"
-DEVMAP_AREAS_PATH = DEVMAP_DIR / "areas.jsonl"
-DEVMAP_VERSIONS_PATH = DEVMAP_DIR / "versions.json"
-SYNC_STATE_PATH = DEVMAP_DIR / "sync-state.json"
-CODEMAP_INDEX_PATH = ROOT / "registry" / "codemap-by-version.json"
 
-# YAX covers multiple inference engines. The vLLM code map keeps its original
-# (unprefixed) filenames for back-compat; other engines use `<engine>-*` files.
+# YAX covers multiple inference engines symmetrically. Each engine has its own
+# `<engine>-*` code-map files under devmap/ and its own generated registry index.
 ENGINES = ("vllm", "sglang")
 
 
 def engine_paths(engine):
-    if engine == "vllm":
-        return {"areas": DEVMAP_AREAS_PATH, "versions": DEVMAP_VERSIONS_PATH,
-                "sync": SYNC_STATE_PATH, "codemap_index": CODEMAP_INDEX_PATH}
     return {
         "areas": DEVMAP_DIR / ("%s-areas.jsonl" % engine),
         "versions": DEVMAP_DIR / ("%s-versions.json" % engine),
@@ -290,7 +283,7 @@ def write_index(args):
     REGISTRY_PATH.write_text(json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print("Wrote %s" % rel(REGISTRY_PATH))
     print("Tools: {tool}, workflows: {workflow}, runs: {run}".format(**index["counts"]))
-    if DEVMAP_AREAS_PATH.exists():
+    if available_engines():
         write_codemap_index()
     return 0
 
@@ -1151,7 +1144,7 @@ def build_parser():
     p.add_argument("--list-areas", action="store_true", help="list all code-map areas and exit")
     p.set_defaults(func=cmd_where)
 
-    p = sub.add_parser("codemap-index", help="generate registry/codemap-by-version.json")
+    p = sub.add_parser("codemap-index", help="generate registry/<engine>-codemap-by-version.json")
     p.set_defaults(func=lambda args: (write_codemap_index(), 0)[1])
 
     p = sub.add_parser("sync-status",
