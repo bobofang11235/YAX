@@ -1,21 +1,21 @@
 {
   "recommend:10": {
-    "margin": 43,
+    "margin": 25,
     "rank": 1,
     "rr": 1.0,
     "score": 47
   },
   "recommend:11": {
-    "margin": 70,
+    "margin": 63,
     "rank": 1,
     "rr": 1.0,
     "score": 83
   },
   "recommend:12": {
-    "margin": -15,
-    "rank": 3,
-    "rr": 0.3333,
-    "score": 4
+    "margin": 9,
+    "rank": 1,
+    "rr": 1.0,
+    "score": 28
   },
   "recommend:13": {
     "margin": 23,
@@ -59,26 +59,44 @@
     "rr": 1.0,
     "score": 28
   },
+  "recommend:20": {
+    "margin": 17,
+    "rank": 1,
+    "rr": 1.0,
+    "score": 75
+  },
+  "recommend:21": {
+    "margin": 24,
+    "rank": 1,
+    "rr": 1.0,
+    "score": 84
+  },
+  "recommend:22": {
+    "margin": 64,
+    "rank": 1,
+    "rr": 1.0,
+    "score": 100
+  },
   "recommend:4": {
-    "margin": 62,
+    "margin": 23,
     "rank": 1,
     "rr": 1.0,
     "score": 79
   },
   "recommend:5": {
-    "margin": 41,
+    "margin": 14,
     "rank": 1,
     "rr": 1.0,
     "score": 52
   },
   "recommend:6": {
-    "margin": 56,
+    "margin": 28,
     "rank": 1,
     "rr": 1.0,
     "score": 80
   },
   "recommend:7": {
-    "margin": 53,
+    "margin": 50,
     "rank": 1,
     "rr": 1.0,
     "score": 55

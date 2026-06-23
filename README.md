@@ -1,10 +1,15 @@
 # YAX
 
-YAX is a retrieval-first **vLLM engineering harness**: a compact toolbox plus
-knowledge base for working on [vLLM](https://github.com/vllm-project/vllm) as an
-inference-engine developer and operator. It captures how to read and edit the
-codebase, what features exist today, and which engine arguments and environment
-variables matter on CUDA and ROCm.
+YAX is a retrieval-first **LLM inference-engine engineering harness**: a compact
+toolbox plus knowledge base for working on
+[vLLM](https://github.com/vllm-project/vllm) and
+[SGLang](https://github.com/sgl-project/sglang) as an inference-engine developer
+and operator. It captures how to read and edit each codebase, what features exist
+today, and which engine arguments and environment variables matter on CUDA and
+ROCm.
+
+Engines are first-class: knowledge lives under `knowledge/<engine>/`, and the
+version-aware code map is per engine (`--engine vllm|sglang`).
 
 It borrows its harness shape from the Zootopia toolbox: markdown is the source of
 truth, a small Python runtime makes search cheap, and instructions, knowledge,
@@ -53,13 +58,14 @@ YAX/
 ├── README.md          # this file
 ├── scripts/yax.py     # toolbox runtime: recommend / search / validate / eval / index
 ├── templates/         # artifact templates
-├── knowledge/         # compact vLLM knowledge library
-│   ├── architecture/  # V1 engine internals, PagedAttention, scheduler, backends
-│   ├── serving/       # engine args, env vars, features, quantization, perf
+├── knowledge/         # compact knowledge library
+│   ├── architecture/  # vLLM V1 engine internals, PagedAttention, scheduler
+│   ├── serving/       # vLLM engine args, env vars, features, quant, perf
 │   ├── rocm/          # ROCm/HIP build, AITER, FP8 fnuz, TunableOp
 │   ├── cuda/          # CUDA build, FlashInfer, DeepGEMM, CUDA graphs, NCCL
-│   └── development/   # repo layout, build, add a model, testing, codebase map
-├── devmap/            # version-tagged code map (areas.jsonl + versions.json)
+│   ├── development/   # vLLM repo layout, build, add a model, testing, codebase map
+│   └── sglang/        # SGLang architecture, RadixAttention, args, env, DSL, vs-vLLM
+├── devmap/            # version-tagged code maps (vllm: areas.jsonl; sglang: sglang-*.jsonl)
 ├── tools/             # canonical tool cards (compact capabilities)
 ├── workflows/         # reusable multi-tool task plans
 ├── runs/              # task lineage records
@@ -104,13 +110,18 @@ tag**:
 
 ```bash
 python3 scripts/yax.py where "scheduler decides which requests run" -V 0.7.3
-#   -> vllm/core/scheduler.py        (V0 layout)
+#   -> vllm/core/scheduler.py        (vLLM V0 layout)
 python3 scripts/yax.py where "scheduler decides which requests run" -V latest
-#   -> vllm/v1/core/sched/scheduler.py  (V1 layout)
+#   -> vllm/v1/core/sched/scheduler.py  (vLLM V1 layout)
+python3 scripts/yax.py where "radix attention prefix reuse" --engine sglang
+#   -> python/sglang/srt/mem_cache/radix_cache.py
 ```
 
-Source of truth is `devmap/areas.jsonl`; the resolved per-version index is
-generated to `registry/codemap-by-version.json`.
+Source of truth is `devmap/areas.jsonl` (vLLM) and `devmap/sglang-areas.jsonl`;
+the resolved per-version indexes are generated to
+`registry/codemap-by-version.json` and `registry/sglang-codemap-by-version.json`.
+Per-engine sync state lives in `devmap/sync-state.json` and
+`devmap/sglang-sync-state.json` (see `python3 scripts/yax.py sync-status -e sglang`).
 
 ## Design Principles
 

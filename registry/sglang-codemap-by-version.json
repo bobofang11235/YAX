@@ -1,0 +1,1304 @@
+{
+  "by_version": {
+    "0.4.0": [
+      {
+        "area": "Attention backends (FlashInfer / Triton / FA3 / Torch native)",
+        "entry": [
+          "AttentionBackend"
+        ],
+        "files": [
+          "python/sglang/srt/layers/attention/flashinfer_backend.py",
+          "python/sglang/srt/layers/attention/triton_backend.py",
+          "python/sglang/srt/layers/attention/flashattention_backend.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/attention/"
+        ],
+        "id": "attention",
+        "note": "Pick via --attention-backend (flashinfer default on CUDA, triton, fa3, torch_native). MLA backends for DeepSeek."
+      },
+      {
+        "area": "Benchmarks (serving / one-batch / latency)",
+        "entry": [
+          "sglang.bench_serving"
+        ],
+        "files": [
+          "python/sglang/bench_serving.py",
+          "python/sglang/bench_one_batch.py",
+          "python/sglang/bench_offline_throughput.py"
+        ],
+        "folders": [
+          "python/sglang/",
+          "benchmark/"
+        ],
+        "id": "benchmarks",
+        "note": "Run `python -m sglang.bench_serving` / `bench_one_batch`. Example workloads in benchmark/."
+      },
+      {
+        "area": "Structured / constrained decoding (grammar: xgrammar/outlines/llguidance)",
+        "entry": [
+          "BaseGrammarBackend"
+        ],
+        "files": [
+          "python/sglang/srt/constrained/xgrammar_backend.py",
+          "python/sglang/srt/constrained/outlines_backend.py",
+          "python/sglang/srt/constrained/base_grammar_backend.py"
+        ],
+        "folders": [
+          "python/sglang/srt/constrained/"
+        ],
+        "id": "constrained",
+        "note": "Grammar compiled to token-bitmask; pick via --grammar-backend. SGLang pioneered compressed-FSM fast structured output."
+      },
+      {
+        "area": "Distributed / parallelism (TP/DP/EP) / workers / comms",
+        "entry": [
+          "TpModelWorker",
+          "DataParallelController"
+        ],
+        "files": [
+          "python/sglang/srt/distributed/parallel_state.py",
+          "python/sglang/srt/managers/tp_worker.py",
+          "python/sglang/srt/managers/data_parallel_controller.py"
+        ],
+        "folders": [
+          "python/sglang/srt/distributed/",
+          "python/sglang/srt/managers/"
+        ],
+        "id": "distributed",
+        "note": "TP worker per GPU; DP controller fans requests to replicas; parallel_state mirrors vLLM's. Custom all-reduce + pynccl."
+      },
+      {
+        "area": "Environment variables (SGLANG_* / SGL_*)",
+        "entry": [
+          "get_bool_env_var"
+        ],
+        "files": [
+          "python/sglang/srt/utils.py",
+          "python/sglang/global_config.py"
+        ],
+        "folders": [
+          "python/sglang/srt/"
+        ],
+        "id": "environment-variables",
+        "note": "Older: env vars read directly via os.environ / utils helpers; some tunables in global_config.py."
+      },
+      {
+        "area": "SGLang frontend DSL (sgl.gen/select/fork, sgl.function)",
+        "entry": [
+          "function",
+          "gen",
+          "select",
+          "fork"
+        ],
+        "files": [
+          "python/sglang/api.py",
+          "python/sglang/lang/interpreter.py",
+          "python/sglang/lang/ir.py"
+        ],
+        "folders": [
+          "python/sglang/lang/",
+          "python/sglang/"
+        ],
+        "id": "frontend-language",
+        "note": "The SGLang DSL for programming multi-call LLM programs; RadixAttention-aware (fork shares KV). This is SGLang's distinctive frontend; vLLM has no equivalent."
+      },
+      {
+        "area": "HTTP server / entrypoints / engine / OpenAI API",
+        "entry": [
+          "launch_server",
+          "Engine"
+        ],
+        "files": [
+          "python/sglang/srt/entrypoints/http_server.py",
+          "python/sglang/srt/entrypoints/engine.py",
+          "python/sglang/srt/entrypoints/openai/serving_chat.py"
+        ],
+        "folders": [
+          "python/sglang/srt/entrypoints/"
+        ],
+        "id": "http-server",
+        "note": "Current entrypoints layout: HTTP server, in-process Engine, and OpenAI serving handlers under entrypoints/openai/."
+      },
+      {
+        "area": "LoRA / multi-LoRA adapters",
+        "entry": [
+          "LoRAManager"
+        ],
+        "files": [
+          "python/sglang/srt/lora/lora_manager.py",
+          "python/sglang/srt/lora/lora.py"
+        ],
+        "folders": [
+          "python/sglang/srt/lora/"
+        ],
+        "id": "lora",
+        "note": "Adapter management + batched LoRA kernels; serve with --lora-paths and --max-loras-per-batch."
+      },
+      {
+        "area": "Model runner / forward batch / CUDA graph capture",
+        "entry": [
+          "ModelRunner",
+          "ForwardBatch",
+          "CudaGraphRunner"
+        ],
+        "files": [
+          "python/sglang/srt/model_executor/model_runner.py",
+          "python/sglang/srt/model_executor/forward_batch_info.py",
+          "python/sglang/srt/model_executor/cuda_graph_runner.py"
+        ],
+        "folders": [
+          "python/sglang/srt/model_executor/"
+        ],
+        "id": "model-runner",
+        "note": "Builds the ForwardBatch and runs the model, under CUDA graphs (Breakable CUDA Graphs in newer releases)."
+      },
+      {
+        "area": "Model definitions / add or port a model",
+        "entry": [
+          "load_weights"
+        ],
+        "files": [
+          "python/sglang/srt/models/llama.py",
+          "python/sglang/srt/models/qwen2.py",
+          "python/sglang/srt/model_loader/loader.py"
+        ],
+        "folders": [
+          "python/sglang/srt/models/"
+        ],
+        "id": "models",
+        "note": "One file per architecture under srt/models; SGLang reuses many vLLM-style layers. Match the HF architectures name. Validate logits vs HF."
+      },
+      {
+        "area": "Mixture-of-Experts / expert parallel / DP attention",
+        "entry": [
+          "FusedMoE",
+          "select_experts"
+        ],
+        "files": [
+          "python/sglang/srt/layers/moe/fused_moe_triton/fused_moe.py",
+          "python/sglang/srt/layers/moe/topk.py",
+          "python/sglang/srt/layers/moe/ep_moe/layer.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/moe/"
+        ],
+        "id": "moe",
+        "note": "Fused MoE + expert-parallel (EP) MoE. DP attention (for DeepSeek) is wired via server args + attention/distributed."
+      },
+      {
+        "area": "Quantization (FP8/AWQ/GPTQ/INT8/Marlin/compressed-tensors)",
+        "entry": [
+          "QuantizationConfig",
+          "get_quant_method"
+        ],
+        "files": [
+          "python/sglang/srt/layers/quantization/fp8.py",
+          "python/sglang/srt/layers/quantization/awq.py",
+          "python/sglang/srt/layers/quantization/gptq.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/quantization/"
+        ],
+        "id": "quantization",
+        "note": "Quant configs + linear/MoE methods. DeepGEMM FP8 path gated by SGL_ENABLE_JIT_DEEPGEMM."
+      },
+      {
+        "area": "RadixAttention / KV memory pool / prefix cache / HiCache",
+        "entry": [
+          "RadixCache",
+          "TokenToKVPool",
+          "ReqToTokenPool"
+        ],
+        "files": [
+          "python/sglang/srt/mem_cache/radix_cache.py",
+          "python/sglang/srt/mem_cache/memory_pool.py",
+          "python/sglang/srt/mem_cache/chunk_cache.py",
+          "python/sglang/srt/mem_cache/base_prefix_cache.py"
+        ],
+        "folders": [
+          "python/sglang/srt/mem_cache/"
+        ],
+        "id": "radix-cache",
+        "note": "RadixAttention = automatic KV reuse via a radix tree (more general than hash-based APC; supports fork/tree sharing). KV pools live here."
+      },
+      {
+        "area": "Sampler / sampling params / logits processing",
+        "entry": [
+          "Sampler",
+          "LogitsProcessor",
+          "SamplingParams"
+        ],
+        "files": [
+          "python/sglang/srt/layers/sampler.py",
+          "python/sglang/srt/layers/logits_processor.py",
+          "python/sglang/srt/sampling/sampling_params.py",
+          "python/sglang/srt/sampling/sampling_batch_info.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/",
+          "python/sglang/srt/sampling/"
+        ],
+        "id": "sampler",
+        "note": "Sampling backend is flashinfer or pytorch (--sampling-backend)."
+      },
+      {
+        "area": "Scheduler / batch scheduling / overlap scheduler / preemption",
+        "entry": [
+          "Scheduler",
+          "Scheduler.event_loop_overlap",
+          "ScheduleBatch",
+          "SchedulePolicy"
+        ],
+        "files": [
+          "python/sglang/srt/managers/scheduler.py",
+          "python/sglang/srt/managers/schedule_batch.py",
+          "python/sglang/srt/managers/schedule_policy.py"
+        ],
+        "folders": [
+          "python/sglang/srt/managers/"
+        ],
+        "id": "scheduler",
+        "note": "Zero-overlap scheduler: event loop, batch formation, and policy (lpm/fcfs/dfs-weight). Overlap of CPU schedule with GPU compute is here."
+      },
+      {
+        "area": "Server arguments / CLI flags (ServerArgs)",
+        "entry": [
+          "ServerArgs",
+          "ServerArgs.add_cli_args",
+          "prepare_server_args"
+        ],
+        "files": [
+          "python/sglang/srt/server_args.py"
+        ],
+        "folders": [
+          "python/sglang/srt/"
+        ],
+        "id": "server-args",
+        "note": "Every launch flag maps to a ServerArgs field; declare new flags here."
+      },
+      {
+        "area": "Speculative decoding (EAGLE / EAGLE3, SpecDecode V2)",
+        "entry": [
+          "EAGLEWorker"
+        ],
+        "files": [
+          "python/sglang/srt/speculative/eagle_worker.py",
+          "python/sglang/srt/speculative/eagle_utils.py"
+        ],
+        "folders": [
+          "python/sglang/srt/speculative/"
+        ],
+        "id": "speculative",
+        "note": "EAGLE-based spec decode; SpecDecode V2 with tree drafting (topk>1) is default in 0.5.13. Enable via --speculative-algorithm."
+      },
+      {
+        "area": "Tests / CI",
+        "entry": [],
+        "files": [
+          "test/srt/run_suite.py",
+          "test/lang/run_suite.py"
+        ],
+        "folders": [
+          "test/"
+        ],
+        "id": "tests",
+        "note": "Tests under test/srt (runtime) and test/lang (frontend); run_suite.py orchestrates CI suites. Compare model output/logits vs HF."
+      },
+      {
+        "area": "Tokenizer manager / detokenizer manager (process IPC)",
+        "entry": [
+          "TokenizerManager",
+          "DetokenizerManager"
+        ],
+        "files": [
+          "python/sglang/srt/managers/tokenizer_manager.py",
+          "python/sglang/srt/managers/detokenizer_manager.py"
+        ],
+        "folders": [
+          "python/sglang/srt/managers/"
+        ],
+        "id": "tokenizer-manager",
+        "note": "SGLang runs tokenizer, scheduler, and detokenizer as separate processes communicating over ZMQ."
+      }
+    ],
+    "0.5.0": [
+      {
+        "area": "Attention backends (FlashInfer / Triton / FA3 / Torch native)",
+        "entry": [
+          "AttentionBackend"
+        ],
+        "files": [
+          "python/sglang/srt/layers/attention/flashinfer_backend.py",
+          "python/sglang/srt/layers/attention/triton_backend.py",
+          "python/sglang/srt/layers/attention/flashattention_backend.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/attention/"
+        ],
+        "id": "attention",
+        "note": "Pick via --attention-backend (flashinfer default on CUDA, triton, fa3, torch_native). MLA backends for DeepSeek."
+      },
+      {
+        "area": "Benchmarks (serving / one-batch / latency)",
+        "entry": [
+          "sglang.bench_serving"
+        ],
+        "files": [
+          "python/sglang/bench_serving.py",
+          "python/sglang/bench_one_batch.py",
+          "python/sglang/bench_offline_throughput.py"
+        ],
+        "folders": [
+          "python/sglang/",
+          "benchmark/"
+        ],
+        "id": "benchmarks",
+        "note": "Run `python -m sglang.bench_serving` / `bench_one_batch`. Example workloads in benchmark/."
+      },
+      {
+        "area": "Structured / constrained decoding (grammar: xgrammar/outlines/llguidance)",
+        "entry": [
+          "BaseGrammarBackend"
+        ],
+        "files": [
+          "python/sglang/srt/constrained/xgrammar_backend.py",
+          "python/sglang/srt/constrained/outlines_backend.py",
+          "python/sglang/srt/constrained/base_grammar_backend.py"
+        ],
+        "folders": [
+          "python/sglang/srt/constrained/"
+        ],
+        "id": "constrained",
+        "note": "Grammar compiled to token-bitmask; pick via --grammar-backend. SGLang pioneered compressed-FSM fast structured output."
+      },
+      {
+        "area": "Distributed / parallelism (TP/DP/EP) / workers / comms",
+        "entry": [
+          "TpModelWorker",
+          "DataParallelController"
+        ],
+        "files": [
+          "python/sglang/srt/distributed/parallel_state.py",
+          "python/sglang/srt/managers/tp_worker.py",
+          "python/sglang/srt/managers/data_parallel_controller.py"
+        ],
+        "folders": [
+          "python/sglang/srt/distributed/",
+          "python/sglang/srt/managers/"
+        ],
+        "id": "distributed",
+        "note": "TP worker per GPU; DP controller fans requests to replicas; parallel_state mirrors vLLM's. Custom all-reduce + pynccl."
+      },
+      {
+        "area": "Environment variables (SGLANG_* / SGL_*)",
+        "entry": [
+          "Envs",
+          "get_bool_env_var"
+        ],
+        "files": [
+          "python/sglang/srt/environ.py",
+          "python/sglang/srt/utils.py"
+        ],
+        "folders": [
+          "python/sglang/srt/"
+        ],
+        "id": "environment-variables",
+        "note": "Newer releases centralize env in srt/environ.py; older ones read os.environ ad hoc (grep SGLANG_/SGL_)."
+      },
+      {
+        "area": "SGLang frontend DSL (sgl.gen/select/fork, sgl.function)",
+        "entry": [
+          "function",
+          "gen",
+          "select",
+          "fork"
+        ],
+        "files": [
+          "python/sglang/api.py",
+          "python/sglang/lang/interpreter.py",
+          "python/sglang/lang/ir.py"
+        ],
+        "folders": [
+          "python/sglang/lang/",
+          "python/sglang/"
+        ],
+        "id": "frontend-language",
+        "note": "The SGLang DSL for programming multi-call LLM programs; RadixAttention-aware (fork shares KV). This is SGLang's distinctive frontend; vLLM has no equivalent."
+      },
+      {
+        "area": "HTTP server / entrypoints / engine / OpenAI API",
+        "entry": [
+          "launch_server",
+          "Engine"
+        ],
+        "files": [
+          "python/sglang/srt/entrypoints/http_server.py",
+          "python/sglang/srt/entrypoints/engine.py",
+          "python/sglang/srt/entrypoints/openai/serving_chat.py"
+        ],
+        "folders": [
+          "python/sglang/srt/entrypoints/"
+        ],
+        "id": "http-server",
+        "note": "Current entrypoints layout: HTTP server, in-process Engine, and OpenAI serving handlers under entrypoints/openai/."
+      },
+      {
+        "area": "LoRA / multi-LoRA adapters",
+        "entry": [
+          "LoRAManager"
+        ],
+        "files": [
+          "python/sglang/srt/lora/lora_manager.py",
+          "python/sglang/srt/lora/lora.py"
+        ],
+        "folders": [
+          "python/sglang/srt/lora/"
+        ],
+        "id": "lora",
+        "note": "Adapter management + batched LoRA kernels; serve with --lora-paths and --max-loras-per-batch."
+      },
+      {
+        "area": "Model runner / forward batch / CUDA graph capture",
+        "entry": [
+          "ModelRunner",
+          "ForwardBatch",
+          "CudaGraphRunner"
+        ],
+        "files": [
+          "python/sglang/srt/model_executor/model_runner.py",
+          "python/sglang/srt/model_executor/forward_batch_info.py",
+          "python/sglang/srt/model_executor/cuda_graph_runner.py"
+        ],
+        "folders": [
+          "python/sglang/srt/model_executor/"
+        ],
+        "id": "model-runner",
+        "note": "Builds the ForwardBatch and runs the model, under CUDA graphs (Breakable CUDA Graphs in newer releases)."
+      },
+      {
+        "area": "Model definitions / add or port a model",
+        "entry": [
+          "load_weights"
+        ],
+        "files": [
+          "python/sglang/srt/models/llama.py",
+          "python/sglang/srt/models/qwen2.py",
+          "python/sglang/srt/model_loader/loader.py"
+        ],
+        "folders": [
+          "python/sglang/srt/models/"
+        ],
+        "id": "models",
+        "note": "One file per architecture under srt/models; SGLang reuses many vLLM-style layers. Match the HF architectures name. Validate logits vs HF."
+      },
+      {
+        "area": "Mixture-of-Experts / expert parallel / DP attention",
+        "entry": [
+          "FusedMoE",
+          "select_experts"
+        ],
+        "files": [
+          "python/sglang/srt/layers/moe/fused_moe_triton/fused_moe.py",
+          "python/sglang/srt/layers/moe/topk.py",
+          "python/sglang/srt/layers/moe/ep_moe/layer.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/moe/"
+        ],
+        "id": "moe",
+        "note": "Fused MoE + expert-parallel (EP) MoE. DP attention (for DeepSeek) is wired via server args + attention/distributed."
+      },
+      {
+        "area": "Quantization (FP8/AWQ/GPTQ/INT8/Marlin/compressed-tensors)",
+        "entry": [
+          "QuantizationConfig",
+          "get_quant_method"
+        ],
+        "files": [
+          "python/sglang/srt/layers/quantization/fp8.py",
+          "python/sglang/srt/layers/quantization/awq.py",
+          "python/sglang/srt/layers/quantization/gptq.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/quantization/"
+        ],
+        "id": "quantization",
+        "note": "Quant configs + linear/MoE methods. DeepGEMM FP8 path gated by SGL_ENABLE_JIT_DEEPGEMM."
+      },
+      {
+        "area": "RadixAttention / KV memory pool / prefix cache / HiCache",
+        "entry": [
+          "RadixCache",
+          "TokenToKVPool",
+          "ReqToTokenPool"
+        ],
+        "files": [
+          "python/sglang/srt/mem_cache/radix_cache.py",
+          "python/sglang/srt/mem_cache/memory_pool.py",
+          "python/sglang/srt/mem_cache/chunk_cache.py",
+          "python/sglang/srt/mem_cache/base_prefix_cache.py"
+        ],
+        "folders": [
+          "python/sglang/srt/mem_cache/"
+        ],
+        "id": "radix-cache",
+        "note": "RadixAttention = automatic KV reuse via a radix tree (more general than hash-based APC; supports fork/tree sharing). KV pools live here."
+      },
+      {
+        "area": "Sampler / sampling params / logits processing",
+        "entry": [
+          "Sampler",
+          "LogitsProcessor",
+          "SamplingParams"
+        ],
+        "files": [
+          "python/sglang/srt/layers/sampler.py",
+          "python/sglang/srt/layers/logits_processor.py",
+          "python/sglang/srt/sampling/sampling_params.py",
+          "python/sglang/srt/sampling/sampling_batch_info.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/",
+          "python/sglang/srt/sampling/"
+        ],
+        "id": "sampler",
+        "note": "Sampling backend is flashinfer or pytorch (--sampling-backend)."
+      },
+      {
+        "area": "Scheduler / batch scheduling / overlap scheduler / preemption",
+        "entry": [
+          "Scheduler",
+          "Scheduler.event_loop_overlap",
+          "ScheduleBatch",
+          "SchedulePolicy"
+        ],
+        "files": [
+          "python/sglang/srt/managers/scheduler.py",
+          "python/sglang/srt/managers/schedule_batch.py",
+          "python/sglang/srt/managers/schedule_policy.py"
+        ],
+        "folders": [
+          "python/sglang/srt/managers/"
+        ],
+        "id": "scheduler",
+        "note": "Zero-overlap scheduler: event loop, batch formation, and policy (lpm/fcfs/dfs-weight). Overlap of CPU schedule with GPU compute is here."
+      },
+      {
+        "area": "Server arguments / CLI flags (ServerArgs)",
+        "entry": [
+          "ServerArgs",
+          "ServerArgs.add_cli_args",
+          "prepare_server_args"
+        ],
+        "files": [
+          "python/sglang/srt/server_args.py"
+        ],
+        "folders": [
+          "python/sglang/srt/"
+        ],
+        "id": "server-args",
+        "note": "Every launch flag maps to a ServerArgs field; declare new flags here."
+      },
+      {
+        "area": "Speculative decoding (EAGLE / EAGLE3, SpecDecode V2)",
+        "entry": [
+          "EAGLEWorker"
+        ],
+        "files": [
+          "python/sglang/srt/speculative/eagle_worker.py",
+          "python/sglang/srt/speculative/eagle_utils.py"
+        ],
+        "folders": [
+          "python/sglang/srt/speculative/"
+        ],
+        "id": "speculative",
+        "note": "EAGLE-based spec decode; SpecDecode V2 with tree drafting (topk>1) is default in 0.5.13. Enable via --speculative-algorithm."
+      },
+      {
+        "area": "Tests / CI",
+        "entry": [],
+        "files": [
+          "test/srt/run_suite.py",
+          "test/lang/run_suite.py"
+        ],
+        "folders": [
+          "test/"
+        ],
+        "id": "tests",
+        "note": "Tests under test/srt (runtime) and test/lang (frontend); run_suite.py orchestrates CI suites. Compare model output/logits vs HF."
+      },
+      {
+        "area": "Tokenizer manager / detokenizer manager (process IPC)",
+        "entry": [
+          "TokenizerManager",
+          "DetokenizerManager"
+        ],
+        "files": [
+          "python/sglang/srt/managers/tokenizer_manager.py",
+          "python/sglang/srt/managers/detokenizer_manager.py"
+        ],
+        "folders": [
+          "python/sglang/srt/managers/"
+        ],
+        "id": "tokenizer-manager",
+        "note": "SGLang runs tokenizer, scheduler, and detokenizer as separate processes communicating over ZMQ."
+      }
+    ],
+    "0.5.13": [
+      {
+        "area": "Attention backends (FlashInfer / Triton / FA3 / Torch native)",
+        "entry": [
+          "AttentionBackend"
+        ],
+        "files": [
+          "python/sglang/srt/layers/attention/flashinfer_backend.py",
+          "python/sglang/srt/layers/attention/triton_backend.py",
+          "python/sglang/srt/layers/attention/flashattention_backend.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/attention/"
+        ],
+        "id": "attention",
+        "note": "Pick via --attention-backend (flashinfer default on CUDA, triton, fa3, torch_native). MLA backends for DeepSeek."
+      },
+      {
+        "area": "Benchmarks (serving / one-batch / latency)",
+        "entry": [
+          "sglang.bench_serving"
+        ],
+        "files": [
+          "python/sglang/bench_serving.py",
+          "python/sglang/bench_one_batch.py",
+          "python/sglang/bench_offline_throughput.py"
+        ],
+        "folders": [
+          "python/sglang/",
+          "benchmark/"
+        ],
+        "id": "benchmarks",
+        "note": "Run `python -m sglang.bench_serving` / `bench_one_batch`. Example workloads in benchmark/."
+      },
+      {
+        "area": "Structured / constrained decoding (grammar: xgrammar/outlines/llguidance)",
+        "entry": [
+          "BaseGrammarBackend"
+        ],
+        "files": [
+          "python/sglang/srt/constrained/xgrammar_backend.py",
+          "python/sglang/srt/constrained/outlines_backend.py",
+          "python/sglang/srt/constrained/base_grammar_backend.py"
+        ],
+        "folders": [
+          "python/sglang/srt/constrained/"
+        ],
+        "id": "constrained",
+        "note": "Grammar compiled to token-bitmask; pick via --grammar-backend. SGLang pioneered compressed-FSM fast structured output."
+      },
+      {
+        "area": "Distributed / parallelism (TP/DP/EP) / workers / comms",
+        "entry": [
+          "TpModelWorker",
+          "DataParallelController"
+        ],
+        "files": [
+          "python/sglang/srt/distributed/parallel_state.py",
+          "python/sglang/srt/managers/tp_worker.py",
+          "python/sglang/srt/managers/data_parallel_controller.py"
+        ],
+        "folders": [
+          "python/sglang/srt/distributed/",
+          "python/sglang/srt/managers/"
+        ],
+        "id": "distributed",
+        "note": "TP worker per GPU; DP controller fans requests to replicas; parallel_state mirrors vLLM's. Custom all-reduce + pynccl."
+      },
+      {
+        "area": "Environment variables (SGLANG_* / SGL_*)",
+        "entry": [
+          "Envs",
+          "get_bool_env_var"
+        ],
+        "files": [
+          "python/sglang/srt/environ.py",
+          "python/sglang/srt/utils.py"
+        ],
+        "folders": [
+          "python/sglang/srt/"
+        ],
+        "id": "environment-variables",
+        "note": "Newer releases centralize env in srt/environ.py; older ones read os.environ ad hoc (grep SGLANG_/SGL_)."
+      },
+      {
+        "area": "SGLang frontend DSL (sgl.gen/select/fork, sgl.function)",
+        "entry": [
+          "function",
+          "gen",
+          "select",
+          "fork"
+        ],
+        "files": [
+          "python/sglang/api.py",
+          "python/sglang/lang/interpreter.py",
+          "python/sglang/lang/ir.py"
+        ],
+        "folders": [
+          "python/sglang/lang/",
+          "python/sglang/"
+        ],
+        "id": "frontend-language",
+        "note": "The SGLang DSL for programming multi-call LLM programs; RadixAttention-aware (fork shares KV). This is SGLang's distinctive frontend; vLLM has no equivalent."
+      },
+      {
+        "area": "HTTP server / entrypoints / engine / OpenAI API",
+        "entry": [
+          "launch_server",
+          "Engine"
+        ],
+        "files": [
+          "python/sglang/srt/entrypoints/http_server.py",
+          "python/sglang/srt/entrypoints/engine.py",
+          "python/sglang/srt/entrypoints/openai/serving_chat.py"
+        ],
+        "folders": [
+          "python/sglang/srt/entrypoints/"
+        ],
+        "id": "http-server",
+        "note": "Current entrypoints layout: HTTP server, in-process Engine, and OpenAI serving handlers under entrypoints/openai/."
+      },
+      {
+        "area": "LoRA / multi-LoRA adapters",
+        "entry": [
+          "LoRAManager"
+        ],
+        "files": [
+          "python/sglang/srt/lora/lora_manager.py",
+          "python/sglang/srt/lora/lora.py"
+        ],
+        "folders": [
+          "python/sglang/srt/lora/"
+        ],
+        "id": "lora",
+        "note": "Adapter management + batched LoRA kernels; serve with --lora-paths and --max-loras-per-batch."
+      },
+      {
+        "area": "Model runner / forward batch / CUDA graph capture",
+        "entry": [
+          "ModelRunner",
+          "ForwardBatch",
+          "CudaGraphRunner"
+        ],
+        "files": [
+          "python/sglang/srt/model_executor/model_runner.py",
+          "python/sglang/srt/model_executor/forward_batch_info.py",
+          "python/sglang/srt/model_executor/cuda_graph_runner.py"
+        ],
+        "folders": [
+          "python/sglang/srt/model_executor/"
+        ],
+        "id": "model-runner",
+        "note": "Builds the ForwardBatch and runs the model, under CUDA graphs (Breakable CUDA Graphs in newer releases)."
+      },
+      {
+        "area": "Model definitions / add or port a model",
+        "entry": [
+          "load_weights"
+        ],
+        "files": [
+          "python/sglang/srt/models/llama.py",
+          "python/sglang/srt/models/qwen2.py",
+          "python/sglang/srt/model_loader/loader.py"
+        ],
+        "folders": [
+          "python/sglang/srt/models/"
+        ],
+        "id": "models",
+        "note": "One file per architecture under srt/models; SGLang reuses many vLLM-style layers. Match the HF architectures name. Validate logits vs HF."
+      },
+      {
+        "area": "Mixture-of-Experts / expert parallel / DP attention",
+        "entry": [
+          "FusedMoE",
+          "select_experts"
+        ],
+        "files": [
+          "python/sglang/srt/layers/moe/fused_moe_triton/fused_moe.py",
+          "python/sglang/srt/layers/moe/topk.py",
+          "python/sglang/srt/layers/moe/ep_moe/layer.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/moe/"
+        ],
+        "id": "moe",
+        "note": "Fused MoE + expert-parallel (EP) MoE. DP attention (for DeepSeek) is wired via server args + attention/distributed."
+      },
+      {
+        "area": "Quantization (FP8/AWQ/GPTQ/INT8/Marlin/compressed-tensors)",
+        "entry": [
+          "QuantizationConfig",
+          "get_quant_method"
+        ],
+        "files": [
+          "python/sglang/srt/layers/quantization/fp8.py",
+          "python/sglang/srt/layers/quantization/awq.py",
+          "python/sglang/srt/layers/quantization/gptq.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/quantization/"
+        ],
+        "id": "quantization",
+        "note": "Quant configs + linear/MoE methods. DeepGEMM FP8 path gated by SGL_ENABLE_JIT_DEEPGEMM."
+      },
+      {
+        "area": "RadixAttention / KV memory pool / prefix cache / HiCache",
+        "entry": [
+          "RadixCache",
+          "TokenToKVPool",
+          "ReqToTokenPool"
+        ],
+        "files": [
+          "python/sglang/srt/mem_cache/radix_cache.py",
+          "python/sglang/srt/mem_cache/memory_pool.py",
+          "python/sglang/srt/mem_cache/chunk_cache.py",
+          "python/sglang/srt/mem_cache/base_prefix_cache.py"
+        ],
+        "folders": [
+          "python/sglang/srt/mem_cache/"
+        ],
+        "id": "radix-cache",
+        "note": "RadixAttention = automatic KV reuse via a radix tree (more general than hash-based APC; supports fork/tree sharing). KV pools live here."
+      },
+      {
+        "area": "Sampler / sampling params / logits processing",
+        "entry": [
+          "Sampler",
+          "LogitsProcessor",
+          "SamplingParams"
+        ],
+        "files": [
+          "python/sglang/srt/layers/sampler.py",
+          "python/sglang/srt/layers/logits_processor.py",
+          "python/sglang/srt/sampling/sampling_params.py",
+          "python/sglang/srt/sampling/sampling_batch_info.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/",
+          "python/sglang/srt/sampling/"
+        ],
+        "id": "sampler",
+        "note": "Sampling backend is flashinfer or pytorch (--sampling-backend)."
+      },
+      {
+        "area": "Scheduler / batch scheduling / overlap scheduler / preemption",
+        "entry": [
+          "Scheduler",
+          "Scheduler.event_loop_overlap",
+          "ScheduleBatch",
+          "SchedulePolicy"
+        ],
+        "files": [
+          "python/sglang/srt/managers/scheduler.py",
+          "python/sglang/srt/managers/schedule_batch.py",
+          "python/sglang/srt/managers/schedule_policy.py"
+        ],
+        "folders": [
+          "python/sglang/srt/managers/"
+        ],
+        "id": "scheduler",
+        "note": "Zero-overlap scheduler: event loop, batch formation, and policy (lpm/fcfs/dfs-weight). Overlap of CPU schedule with GPU compute is here."
+      },
+      {
+        "area": "Server arguments / CLI flags (ServerArgs)",
+        "entry": [
+          "ServerArgs",
+          "ServerArgs.add_cli_args",
+          "prepare_server_args"
+        ],
+        "files": [
+          "python/sglang/srt/server_args.py"
+        ],
+        "folders": [
+          "python/sglang/srt/"
+        ],
+        "id": "server-args",
+        "note": "Every launch flag maps to a ServerArgs field; declare new flags here."
+      },
+      {
+        "area": "Speculative decoding (EAGLE / EAGLE3, SpecDecode V2)",
+        "entry": [
+          "EAGLEWorker"
+        ],
+        "files": [
+          "python/sglang/srt/speculative/eagle_worker.py",
+          "python/sglang/srt/speculative/eagle_utils.py"
+        ],
+        "folders": [
+          "python/sglang/srt/speculative/"
+        ],
+        "id": "speculative",
+        "note": "EAGLE-based spec decode; SpecDecode V2 with tree drafting (topk>1) is default in 0.5.13. Enable via --speculative-algorithm."
+      },
+      {
+        "area": "Tests / CI",
+        "entry": [],
+        "files": [
+          "test/srt/run_suite.py",
+          "test/lang/run_suite.py"
+        ],
+        "folders": [
+          "test/"
+        ],
+        "id": "tests",
+        "note": "Tests under test/srt (runtime) and test/lang (frontend); run_suite.py orchestrates CI suites. Compare model output/logits vs HF."
+      },
+      {
+        "area": "Tokenizer manager / detokenizer manager (process IPC)",
+        "entry": [
+          "TokenizerManager",
+          "DetokenizerManager"
+        ],
+        "files": [
+          "python/sglang/srt/managers/tokenizer_manager.py",
+          "python/sglang/srt/managers/detokenizer_manager.py"
+        ],
+        "folders": [
+          "python/sglang/srt/managers/"
+        ],
+        "id": "tokenizer-manager",
+        "note": "SGLang runs tokenizer, scheduler, and detokenizer as separate processes communicating over ZMQ."
+      }
+    ],
+    "latest": [
+      {
+        "area": "Attention backends (FlashInfer / Triton / FA3 / Torch native)",
+        "entry": [
+          "AttentionBackend"
+        ],
+        "files": [
+          "python/sglang/srt/layers/attention/flashinfer_backend.py",
+          "python/sglang/srt/layers/attention/triton_backend.py",
+          "python/sglang/srt/layers/attention/flashattention_backend.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/attention/"
+        ],
+        "id": "attention",
+        "note": "Pick via --attention-backend (flashinfer default on CUDA, triton, fa3, torch_native). MLA backends for DeepSeek."
+      },
+      {
+        "area": "Benchmarks (serving / one-batch / latency)",
+        "entry": [
+          "sglang.bench_serving"
+        ],
+        "files": [
+          "python/sglang/bench_serving.py",
+          "python/sglang/bench_one_batch.py",
+          "python/sglang/bench_offline_throughput.py"
+        ],
+        "folders": [
+          "python/sglang/",
+          "benchmark/"
+        ],
+        "id": "benchmarks",
+        "note": "Run `python -m sglang.bench_serving` / `bench_one_batch`. Example workloads in benchmark/."
+      },
+      {
+        "area": "Structured / constrained decoding (grammar: xgrammar/outlines/llguidance)",
+        "entry": [
+          "BaseGrammarBackend"
+        ],
+        "files": [
+          "python/sglang/srt/constrained/xgrammar_backend.py",
+          "python/sglang/srt/constrained/outlines_backend.py",
+          "python/sglang/srt/constrained/base_grammar_backend.py"
+        ],
+        "folders": [
+          "python/sglang/srt/constrained/"
+        ],
+        "id": "constrained",
+        "note": "Grammar compiled to token-bitmask; pick via --grammar-backend. SGLang pioneered compressed-FSM fast structured output."
+      },
+      {
+        "area": "Distributed / parallelism (TP/DP/EP) / workers / comms",
+        "entry": [
+          "TpModelWorker",
+          "DataParallelController"
+        ],
+        "files": [
+          "python/sglang/srt/distributed/parallel_state.py",
+          "python/sglang/srt/managers/tp_worker.py",
+          "python/sglang/srt/managers/data_parallel_controller.py"
+        ],
+        "folders": [
+          "python/sglang/srt/distributed/",
+          "python/sglang/srt/managers/"
+        ],
+        "id": "distributed",
+        "note": "TP worker per GPU; DP controller fans requests to replicas; parallel_state mirrors vLLM's. Custom all-reduce + pynccl."
+      },
+      {
+        "area": "Environment variables (SGLANG_* / SGL_*)",
+        "entry": [
+          "Envs",
+          "get_bool_env_var"
+        ],
+        "files": [
+          "python/sglang/srt/environ.py",
+          "python/sglang/srt/utils.py"
+        ],
+        "folders": [
+          "python/sglang/srt/"
+        ],
+        "id": "environment-variables",
+        "note": "Newer releases centralize env in srt/environ.py; older ones read os.environ ad hoc (grep SGLANG_/SGL_)."
+      },
+      {
+        "area": "SGLang frontend DSL (sgl.gen/select/fork, sgl.function)",
+        "entry": [
+          "function",
+          "gen",
+          "select",
+          "fork"
+        ],
+        "files": [
+          "python/sglang/api.py",
+          "python/sglang/lang/interpreter.py",
+          "python/sglang/lang/ir.py"
+        ],
+        "folders": [
+          "python/sglang/lang/",
+          "python/sglang/"
+        ],
+        "id": "frontend-language",
+        "note": "The SGLang DSL for programming multi-call LLM programs; RadixAttention-aware (fork shares KV). This is SGLang's distinctive frontend; vLLM has no equivalent."
+      },
+      {
+        "area": "HTTP server / entrypoints / engine / OpenAI API",
+        "entry": [
+          "launch_server",
+          "Engine"
+        ],
+        "files": [
+          "python/sglang/srt/entrypoints/http_server.py",
+          "python/sglang/srt/entrypoints/engine.py",
+          "python/sglang/srt/entrypoints/openai/serving_chat.py"
+        ],
+        "folders": [
+          "python/sglang/srt/entrypoints/"
+        ],
+        "id": "http-server",
+        "note": "Current entrypoints layout: HTTP server, in-process Engine, and OpenAI serving handlers under entrypoints/openai/."
+      },
+      {
+        "area": "LoRA / multi-LoRA adapters",
+        "entry": [
+          "LoRAManager"
+        ],
+        "files": [
+          "python/sglang/srt/lora/lora_manager.py",
+          "python/sglang/srt/lora/lora.py"
+        ],
+        "folders": [
+          "python/sglang/srt/lora/"
+        ],
+        "id": "lora",
+        "note": "Adapter management + batched LoRA kernels; serve with --lora-paths and --max-loras-per-batch."
+      },
+      {
+        "area": "Model runner / forward batch / CUDA graph capture",
+        "entry": [
+          "ModelRunner",
+          "ForwardBatch",
+          "CudaGraphRunner"
+        ],
+        "files": [
+          "python/sglang/srt/model_executor/model_runner.py",
+          "python/sglang/srt/model_executor/forward_batch_info.py",
+          "python/sglang/srt/model_executor/cuda_graph_runner.py"
+        ],
+        "folders": [
+          "python/sglang/srt/model_executor/"
+        ],
+        "id": "model-runner",
+        "note": "Builds the ForwardBatch and runs the model, under CUDA graphs (Breakable CUDA Graphs in newer releases)."
+      },
+      {
+        "area": "Model definitions / add or port a model",
+        "entry": [
+          "load_weights"
+        ],
+        "files": [
+          "python/sglang/srt/models/llama.py",
+          "python/sglang/srt/models/qwen2.py",
+          "python/sglang/srt/model_loader/loader.py"
+        ],
+        "folders": [
+          "python/sglang/srt/models/"
+        ],
+        "id": "models",
+        "note": "One file per architecture under srt/models; SGLang reuses many vLLM-style layers. Match the HF architectures name. Validate logits vs HF."
+      },
+      {
+        "area": "Mixture-of-Experts / expert parallel / DP attention",
+        "entry": [
+          "FusedMoE",
+          "select_experts"
+        ],
+        "files": [
+          "python/sglang/srt/layers/moe/fused_moe_triton/fused_moe.py",
+          "python/sglang/srt/layers/moe/topk.py",
+          "python/sglang/srt/layers/moe/ep_moe/layer.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/moe/"
+        ],
+        "id": "moe",
+        "note": "Fused MoE + expert-parallel (EP) MoE. DP attention (for DeepSeek) is wired via server args + attention/distributed."
+      },
+      {
+        "area": "Quantization (FP8/AWQ/GPTQ/INT8/Marlin/compressed-tensors)",
+        "entry": [
+          "QuantizationConfig",
+          "get_quant_method"
+        ],
+        "files": [
+          "python/sglang/srt/layers/quantization/fp8.py",
+          "python/sglang/srt/layers/quantization/awq.py",
+          "python/sglang/srt/layers/quantization/gptq.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/quantization/"
+        ],
+        "id": "quantization",
+        "note": "Quant configs + linear/MoE methods. DeepGEMM FP8 path gated by SGL_ENABLE_JIT_DEEPGEMM."
+      },
+      {
+        "area": "RadixAttention / KV memory pool / prefix cache / HiCache",
+        "entry": [
+          "RadixCache",
+          "TokenToKVPool",
+          "ReqToTokenPool"
+        ],
+        "files": [
+          "python/sglang/srt/mem_cache/radix_cache.py",
+          "python/sglang/srt/mem_cache/memory_pool.py",
+          "python/sglang/srt/mem_cache/chunk_cache.py",
+          "python/sglang/srt/mem_cache/base_prefix_cache.py"
+        ],
+        "folders": [
+          "python/sglang/srt/mem_cache/"
+        ],
+        "id": "radix-cache",
+        "note": "RadixAttention = automatic KV reuse via a radix tree (more general than hash-based APC; supports fork/tree sharing). KV pools live here."
+      },
+      {
+        "area": "Sampler / sampling params / logits processing",
+        "entry": [
+          "Sampler",
+          "LogitsProcessor",
+          "SamplingParams"
+        ],
+        "files": [
+          "python/sglang/srt/layers/sampler.py",
+          "python/sglang/srt/layers/logits_processor.py",
+          "python/sglang/srt/sampling/sampling_params.py",
+          "python/sglang/srt/sampling/sampling_batch_info.py"
+        ],
+        "folders": [
+          "python/sglang/srt/layers/",
+          "python/sglang/srt/sampling/"
+        ],
+        "id": "sampler",
+        "note": "Sampling backend is flashinfer or pytorch (--sampling-backend)."
+      },
+      {
+        "area": "Scheduler / batch scheduling / overlap scheduler / preemption",
+        "entry": [
+          "Scheduler",
+          "Scheduler.event_loop_overlap",
+          "ScheduleBatch",
+          "SchedulePolicy"
+        ],
+        "files": [
+          "python/sglang/srt/managers/scheduler.py",
+          "python/sglang/srt/managers/schedule_batch.py",
+          "python/sglang/srt/managers/schedule_policy.py"
+        ],
+        "folders": [
+          "python/sglang/srt/managers/"
+        ],
+        "id": "scheduler",
+        "note": "Zero-overlap scheduler: event loop, batch formation, and policy (lpm/fcfs/dfs-weight). Overlap of CPU schedule with GPU compute is here."
+      },
+      {
+        "area": "Server arguments / CLI flags (ServerArgs)",
+        "entry": [
+          "ServerArgs",
+          "ServerArgs.add_cli_args",
+          "prepare_server_args"
+        ],
+        "files": [
+          "python/sglang/srt/server_args.py"
+        ],
+        "folders": [
+          "python/sglang/srt/"
+        ],
+        "id": "server-args",
+        "note": "Every launch flag maps to a ServerArgs field; declare new flags here."
+      },
+      {
+        "area": "Speculative decoding (EAGLE / EAGLE3, SpecDecode V2)",
+        "entry": [
+          "EAGLEWorker"
+        ],
+        "files": [
+          "python/sglang/srt/speculative/eagle_worker.py",
+          "python/sglang/srt/speculative/eagle_utils.py"
+        ],
+        "folders": [
+          "python/sglang/srt/speculative/"
+        ],
+        "id": "speculative",
+        "note": "EAGLE-based spec decode; SpecDecode V2 with tree drafting (topk>1) is default in 0.5.13. Enable via --speculative-algorithm."
+      },
+      {
+        "area": "Tests / CI",
+        "entry": [],
+        "files": [
+          "test/srt/run_suite.py",
+          "test/lang/run_suite.py"
+        ],
+        "folders": [
+          "test/"
+        ],
+        "id": "tests",
+        "note": "Tests under test/srt (runtime) and test/lang (frontend); run_suite.py orchestrates CI suites. Compare model output/logits vs HF."
+      },
+      {
+        "area": "Tokenizer manager / detokenizer manager (process IPC)",
+        "entry": [
+          "TokenizerManager",
+          "DetokenizerManager"
+        ],
+        "files": [
+          "python/sglang/srt/managers/tokenizer_manager.py",
+          "python/sglang/srt/managers/detokenizer_manager.py"
+        ],
+        "folders": [
+          "python/sglang/srt/managers/"
+        ],
+        "id": "tokenizer-manager",
+        "note": "SGLang runs tokenizer, scheduler, and detokenizer as separate processes communicating over ZMQ."
+      }
+    ]
+  },
+  "engine": "sglang",
+  "source": "sglang-areas.jsonl",
+  "tags": [
+    "0.4.0",
+    "0.5.0",
+    "0.5.13",
+    "latest"
+  ],
+  "version": "1.0.0"
+}

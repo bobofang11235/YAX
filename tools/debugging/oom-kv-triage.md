@@ -4,7 +4,7 @@ kind: tool
 title: OOM And KV Cache Triage
 status: active
 tags: [oom, memory, kv-cache, preemption, max-model-len, gpu-memory-utilization, debug]
-aliases: [out of memory, cannot fit max_model_len, preemption, kv cache too small, oom]
+aliases: [out of memory, cannot fit max_model_len, preemption, sequence preempted, throughput collapse, kv cache too small, oom]
 capabilities:
   - classify an OOM as load-time vs KV-pool vs runtime spike
   - pick the right memory lever

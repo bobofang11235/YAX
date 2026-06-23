@@ -1,8 +1,10 @@
 # YAX Agent Guide
 
-YAX is a vLLM engineering toolbox plus compact knowledge base. Start from
-retrieval, load the smallest useful tools/workflows, execute with validation,
-and save reusable learning back into the toolbox.
+YAX is an LLM inference-engine engineering toolbox plus compact knowledge base,
+covering **vLLM** and **SGLang**. Start from retrieval, load the smallest useful
+tools/workflows, execute with validation, and save reusable learning back into
+the toolbox. Engine-specific knowledge is under `knowledge/<engine>/`; the code
+map is per engine via `--engine`.
 
 ## Retrieval Order
 
@@ -36,8 +38,10 @@ and save reusable learning back into the toolbox.
 - How to edit the codebase, build from source, add a model, run tests:
   `knowledge/development/README.md`
 - Which folders/files to check or edit for a problem (version-aware code map):
-  `python3 scripts/yax.py where "<problem>" -V <vllm-version>` and
-  `knowledge/development/codebase-map.md`
+  `python3 scripts/yax.py where "<problem>" -V <version>` (add `--engine sglang`
+  for SGLang) and `knowledge/development/codebase-map.md`
+- SGLang (architecture, RadixAttention, server args, env, DSL, vs vLLM):
+  `knowledge/sglang/README.md`
 - What vLLM version YAX reflects + how to pull newer changes:
   `python3 scripts/yax.py sync-status`, `CHANGELOG.md`, `devmap/sync-state.json`
 - Understanding the repository design:
@@ -63,19 +67,21 @@ and save reusable learning back into the toolbox.
 - Prefer promoted knowledge over raw capture notes.
 - Do not load all tools or workflows by default.
 
-## Developing vLLM: Route By Version
+## Developing An Engine: Route By Version
 
-YAX is built to help **develop vLLM**, where the file layout changes between
+YAX helps **develop vLLM and SGLang**, where file layouts change between
 versions. Before reading code, ask the code map where to look:
 
 ```bash
-python3 scripts/yax.py where "<problem or change>" -V <vllm-version>   # e.g. -V 0.8.5
+python3 scripts/yax.py where "<problem>" -V 0.8.5                  # vLLM (default)
+python3 scripts/yax.py where "<problem>" --engine sglang -V 0.5.13 # SGLang
 ```
 
-It returns the folders/files/entry-points for that version's layout (V0 vs V1
-relocation handled automatically). Then confirm the exact paths against the
-checkout. Add or fix areas in `devmap/areas.jsonl` and rerun
-`python3 scripts/yax.py index` when a path has moved.
+It returns the folders/files/entry-points for that engine+version's layout
+(vLLM V0/V1 and SGLang pre/post-0.4 relocations handled automatically). Confirm
+exact paths against the checkout. Add or fix areas in `devmap/areas.jsonl`
+(vLLM) or `devmap/sglang-areas.jsonl` and rerun `python3 scripts/yax.py index`
+when a path has moved.
 
 ## vLLM Engineering Rules
 

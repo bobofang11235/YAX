@@ -17,4 +17,7 @@
 {"query": "add a new model architecture register load_weights", "expect": "tool:add-new-model", "max_rank": 2, "cluster": "dev"}
 {"query": "run a model on amd rocm mi300 aiter tunableop", "expect": "workflow:rocm-bringup", "max_rank": 1, "cluster": "rocm"}
 {"query": "fp8 fnuz ocp format mismatch on amd", "expect": "workflow:rocm-bringup", "max_rank": 3, "cluster": "rocm"}
+{"query": "serve a model with sglang on 2 gpus", "expect": "workflow:serve-sglang-model", "max_rank": 1, "cluster": "sglang"}
+{"query": "launch the sglang openai server", "expect": "tool:launch-sglang-server", "max_rank": 2, "cluster": "sglang"}
+{"query": "tune sglang throughput mem-fraction-static radix cache", "expect": "tool:tune-sglang-config", "max_rank": 2, "cluster": "sglang"}
 {"query": "how do i bake sourdough bread at home", "expect_none": true, "cluster": "offdomain"}

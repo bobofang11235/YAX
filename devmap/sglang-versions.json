@@ -1,0 +1,20 @@
+{
+  "description": "SGLang version eras for the code-map indexer. SGLang's serving runtime lives under python/sglang/srt and the frontend DSL under python/sglang/lang. Paths are fairly stable across 0.4-0.5; the indexer resolves each area's layout for the requested tag.",
+  "eras": [
+    {
+      "id": "pre-0.4",
+      "label": "Pre zero-overhead-scheduler",
+      "range": "<= 0.3.x",
+      "note": "Older layout; the HTTP server lived in python/sglang/srt/server.py before the entrypoints/ split."
+    },
+    {
+      "id": "v0.4+",
+      "label": "Zero-overhead batch scheduler era",
+      "range": ">= 0.4.0",
+      "note": "Current architecture: overlap scheduler, srt/entrypoints/ (http_server.py, engine.py, openai/), srt/managers, srt/mem_cache (RadixAttention)."
+    }
+  ],
+  "representative_tags": ["0.4.0", "0.5.0", "0.5.13", "latest"],
+  "default_tag": "latest",
+  "how_to_read": "Each area in sglang-areas.jsonl lists layouts with optional since/until bounds. The first layout whose range contains the requested version wins; latest resolves to the newest layout."
+}

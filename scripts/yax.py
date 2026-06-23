@@ -28,6 +28,26 @@ DEVMAP_AREAS_PATH = DEVMAP_DIR / "areas.jsonl"
 DEVMAP_VERSIONS_PATH = DEVMAP_DIR / "versions.json"
 SYNC_STATE_PATH = DEVMAP_DIR / "sync-state.json"
 CODEMAP_INDEX_PATH = ROOT / "registry" / "codemap-by-version.json"
+
+# YAX covers multiple inference engines. The vLLM code map keeps its original
+# (unprefixed) filenames for back-compat; other engines use `<engine>-*` files.
+ENGINES = ("vllm", "sglang")
+
+
+def engine_paths(engine):
+    if engine == "vllm":
+        return {"areas": DEVMAP_AREAS_PATH, "versions": DEVMAP_VERSIONS_PATH,
+                "sync": SYNC_STATE_PATH, "codemap_index": CODEMAP_INDEX_PATH}
+    return {
+        "areas": DEVMAP_DIR / ("%s-areas.jsonl" % engine),
+        "versions": DEVMAP_DIR / ("%s-versions.json" % engine),
+        "sync": DEVMAP_DIR / ("%s-sync-state.json" % engine),
+        "codemap_index": ROOT / "registry" / ("%s-codemap-by-version.json" % engine),
+    }
+
+
+def available_engines():
+    return [e for e in ENGINES if engine_paths(e)["areas"].exists()]
 DRIFT_MARGIN_TOL = 3
 KIND_DIR = {
     "tool": "tools/custom",
@@ -479,17 +499,19 @@ def validate_artifacts(root=ROOT):
             warnings.append("could not compare registry: %s" % exc)
     elif root == ROOT:
         warnings.append("registry/toolbox-index.json does not exist; run `python3 scripts/yax.py index`")
-    if root == ROOT and DEVMAP_AREAS_PATH.exists():
-        try:
-            current_cm = build_codemap_index()
-            if not CODEMAP_INDEX_PATH.exists():
-                warnings.append("registry/codemap-by-version.json does not exist; run `python3 scripts/yax.py index`")
-            else:
-                stored_cm = json.loads(CODEMAP_INDEX_PATH.read_text(encoding="utf-8"))
-                if stored_cm.get("by_version") != current_cm.get("by_version"):
-                    warnings.append("registry/codemap-by-version.json is stale; run `python3 scripts/yax.py index`")
-        except Exception as exc:
-            warnings.append("could not compare codemap index: %s" % exc)
+    if root == ROOT:
+        for engine in available_engines():
+            idx_path = engine_paths(engine)["codemap_index"]
+            try:
+                current_cm = build_codemap_index(engine)
+                if not idx_path.exists():
+                    warnings.append("%s does not exist; run `python3 scripts/yax.py index`" % rel(idx_path))
+                else:
+                    stored_cm = json.loads(idx_path.read_text(encoding="utf-8"))
+                    if stored_cm.get("by_version") != current_cm.get("by_version"):
+                        warnings.append("%s is stale; run `python3 scripts/yax.py index`" % rel(idx_path))
+            except Exception as exc:
+                warnings.append("could not compare %s codemap index: %s" % (engine, exc))
     return errors, warnings
 
 
@@ -884,28 +906,30 @@ def parse_version(tag):
     return tuple(parts) or (0,)
 
 
-def load_versions():
-    if not DEVMAP_VERSIONS_PATH.exists():
+def load_versions(engine="vllm"):
+    path = engine_paths(engine)["versions"]
+    if not path.exists():
         return {}
     try:
-        return json.loads(DEVMAP_VERSIONS_PATH.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except ValueError:
         return {}
 
 
-def load_codemap():
-    """Load code-map areas from devmap/areas.jsonl (skip blank/# lines)."""
+def load_codemap(engine="vllm"):
+    """Load code-map areas for an engine (skip blank/# lines)."""
     areas = []
-    if not DEVMAP_AREAS_PATH.exists():
+    path = engine_paths(engine)["areas"]
+    if not path.exists():
         return areas
-    for lineno, raw in enumerate(DEVMAP_AREAS_PATH.read_text(encoding="utf-8").splitlines(), 1):
+    for lineno, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
         try:
             areas.append(json.loads(line))
         except ValueError as exc:
-            raise SystemExit("Bad code-map line %d: %s" % (lineno, exc))
+            raise SystemExit("Bad %s code-map line %d: %s" % (engine, lineno, exc))
     return areas
 
 
@@ -973,26 +997,28 @@ def print_area(area, version_tuple, version_tag):
 
 
 def cmd_where(args):
-    areas = load_codemap()
+    engine = getattr(args, "engine", "vllm")
+    areas = load_codemap(engine)
+    label = engine.upper()
     if not areas:
-        print("No code map loaded (devmap/areas.jsonl missing).")
+        print("No code map for engine '%s' (%s missing)."
+              % (engine, rel(engine_paths(engine)["areas"])))
         return 1
-    versions = load_versions()
+    versions = load_versions(engine)
     tag = args.version or versions.get("default_tag", "latest")
     vt = parse_version(tag)
     if args.list_areas:
-        print("# vLLM code-map areas")
+        print("# %s code-map areas" % label)
         for a in sorted(areas, key=lambda x: x["id"]):
-            print("- %-18s %s" % (a["id"], a.get("area", "")))
+            print("- %-20s %s" % (a["id"], a.get("area", "")))
         return 0
     scored = sorted(((codemap_score(args.query, a), a) for a in areas),
                     key=lambda p: (-p[0], p[1]["id"]))
     hits = [a for s, a in scored if s > 0][:args.limit]
-    print("# Where to look in vLLM")
+    print("# Where to look in %s" % label)
     print("")
     print("Query: %s" % args.query)
-    print("Version: %s  (resolved layout era: %s)"
-          % (tag, "v1" if vt >= parse_version("0.8.0") else "v0"))
+    print("Engine: %s   Version: %s" % (engine, tag))
     print("")
     if not hits:
         print("No matching area. Try `--list-areas` or rephrase with code terms")
@@ -1005,17 +1031,18 @@ def cmd_where(args):
     return 0
 
 
-def build_codemap_index():
-    """Generate a per-version resolved view of the code map.
+def build_codemap_index(engine="vllm"):
+    """Generate a per-version resolved view of an engine's code map.
 
-    'use tag to generate an indexer': for each representative version tag, emit
-    the resolved folders/files/entry for every area, so a developer on a given
-    vLLM version gets the right paths.
+    For each representative version tag, emit the resolved folders/files/entry
+    for every area, so a developer on a given engine version gets the right
+    paths.
     """
-    areas = load_codemap()
-    versions = load_versions()
+    areas = load_codemap(engine)
+    versions = load_versions(engine)
     tags = versions.get("representative_tags", ["latest"])
-    out = {"version": "1.0.0", "source": "devmap/areas.jsonl", "tags": tags,
+    out = {"version": "1.0.0", "engine": engine,
+           "source": engine_paths(engine)["areas"].name, "tags": tags,
            "by_version": {}}
     for tag in tags:
         vt = parse_version(tag)
@@ -1035,57 +1062,61 @@ def build_codemap_index():
 
 
 def write_codemap_index():
-    index = build_codemap_index()
-    CODEMAP_INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CODEMAP_INDEX_PATH.write_text(
-        json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print("Wrote %s" % rel(CODEMAP_INDEX_PATH))
-    print("Areas: %d, tags: %s"
-          % (len(load_codemap()), ", ".join(index["tags"])))
+    for engine in available_engines():
+        index = build_codemap_index(engine)
+        path = engine_paths(engine)["codemap_index"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print("Wrote %s (%s: %d areas, tags: %s)"
+              % (rel(path), engine, len(load_codemap(engine)), ", ".join(index["tags"])))
 
 
-def load_sync_state():
-    if not SYNC_STATE_PATH.exists():
+def load_sync_state(engine="vllm"):
+    path = engine_paths(engine)["sync"]
+    if not path.exists():
         return {}
     try:
-        return json.loads(SYNC_STATE_PATH.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except ValueError:
         return {}
 
 
 def cmd_sync_status(args):
-    """Show the upstream vLLM point YAX is synced to and how to find newer commits."""
-    state = load_sync_state()
+    """Show the upstream point YAX is synced to (per engine) and how to find newer commits."""
+    engine = getattr(args, "engine", "vllm")
+    state = load_sync_state(engine)
     if not state:
-        print("No sync state found (devmap/sync-state.json missing).")
+        print("No sync state for engine '%s' (%s missing)."
+              % (engine, rel(engine_paths(engine)["sync"])))
         return 1
     ref = state.get("synced_to", "<unknown>")
-    repo = state.get("vllm_repo", "https://github.com/vllm-project/vllm")
+    repo = state.get("repo") or state.get("vllm_repo") or ""
     branch = state.get("default_branch", "main")
-    print("# YAX upstream sync status")
+    print("# YAX upstream sync status (%s)" % engine)
     print("")
-    print("vLLM repo:     %s" % repo)
+    print("Repo:          %s" % repo)
     print("Synced to:     %s  (release %s)"
           % (ref, state.get("synced_to_release_date", "?")))
     print("Synced on:     %s" % state.get("synced_on", "?"))
     print("Engine era:    %s" % state.get("engine_era", "?"))
     print("")
     print("To review only what changed since the last sync:")
-    print("  git -C <vllm-clone> fetch --tags")
-    print("  git -C <vllm-clone> log --oneline %s..origin/%s" % (ref, branch))
+    print("  git -C <clone> fetch --tags")
+    print("  git -C <clone> log --oneline %s..origin/%s" % (ref, branch))
     print("")
     print("After updating YAX, bump `synced_to`/`synced_on` in")
-    print("devmap/sync-state.json and add a CHANGELOG.md entry.")
-    vllm_path = getattr(args, "vllm_path", None)
-    if vllm_path:
+    print("%s and add a CHANGELOG.md entry." % rel(engine_paths(engine)["sync"]))
+    repo_path = getattr(args, "repo_path", None)
+    if repo_path:
         import subprocess
-        p = Path(vllm_path)
+        p = Path(repo_path)
         if not (p / ".git").exists():
             print("")
-            print("WARNING: %s is not a git checkout; skipping diff." % vllm_path)
+            print("WARNING: %s is not a git checkout; skipping diff." % repo_path)
             return 0
         print("")
-        print("## New commits in %s since %s" % (vllm_path, ref))
+        print("## New commits in %s since %s" % (repo_path, ref))
         try:
             subprocess.run(["git", "-C", str(p), "fetch", "--tags", "--quiet"], check=False)
             res = subprocess.run(
@@ -1111,9 +1142,11 @@ def build_parser():
 
     p = sub.add_parser("where",
                        help="version-aware code map: which folders/files to check/edit for a problem")
-    p.add_argument("query")
+    p.add_argument("query", nargs="?", default="")
+    p.add_argument("--engine", "-e", choices=ENGINES, default="vllm",
+                   help="which engine's code map to use (default: vllm)")
     p.add_argument("--version", "-V", default=None,
-                   help="vLLM version tag, e.g. 0.8.5 or latest (default: latest)")
+                   help="engine version tag, e.g. 0.8.5 or latest (default: latest)")
     p.add_argument("--limit", type=int, default=5)
     p.add_argument("--list-areas", action="store_true", help="list all code-map areas and exit")
     p.set_defaults(func=cmd_where)
@@ -1122,9 +1155,11 @@ def build_parser():
     p.set_defaults(func=lambda args: (write_codemap_index(), 0)[1])
 
     p = sub.add_parser("sync-status",
-                       help="show the vLLM version YAX is synced to + how to find newer commits")
-    p.add_argument("--vllm-path", default=None,
-                   help="path to a local vLLM checkout; if given, runs the commit diff")
+                       help="show the engine version YAX is synced to + how to find newer commits")
+    p.add_argument("--engine", "-e", choices=ENGINES, default="vllm",
+                   help="which engine's sync state to show (default: vllm)")
+    p.add_argument("--repo-path", "--vllm-path", dest="repo_path", default=None,
+                   help="path to a local engine checkout; if given, runs the commit diff")
     p.set_defaults(func=cmd_sync_status)
 
     p = sub.add_parser("search", help="search tools, workflows, and runs")

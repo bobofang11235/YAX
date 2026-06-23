@@ -41,6 +41,18 @@ Newest first.
 
 - (pending changes go here)
 
+## 2026-06-23 — Add SGLang as a second engine
+
+- vLLM synced to: **v0.23.0**; SGLang synced to: **v0.5.13** (2026-06-13).
+- Made YAX multi-engine: `scripts/yax.py where` / `sync-status` take `--engine
+  vllm|sglang`; `index` generates a per-engine code-map index.
+- Added SGLang code map: `devmap/sglang-areas.jsonl` (19 areas),
+  `devmap/sglang-versions.json`, `devmap/sglang-sync-state.json`.
+- Added `knowledge/sglang/`: architecture, RadixAttention, server args, env vars,
+  features, frontend DSL, performance tuning, and a vLLM-vs-SGLang comparison.
+- Added SGLang tool cards (`launch-sglang-server`, `tune-sglang-config`), the
+  `serve-sglang-model` workflow, and golden routing eval cases.
+
 ## 2026-06-23 — Performance analysis + estimator
 
 - vLLM synced to: **v0.23.0** (analysis/tooling only; no new upstream review)

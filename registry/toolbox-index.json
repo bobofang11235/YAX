@@ -289,9 +289,68 @@
     },
     {
       "aliases": [
+        "sglang launch_server",
+        "sglang serve",
+        "deploy sglang",
+        "run sglang server"
+      ],
+      "capabilities": [
+        "start an SGLang OpenAI-compatible endpoint with sane flags",
+        "map vLLM-style intent to SGLang server args",
+        "smoke-test the endpoint"
+      ],
+      "id": "launch-sglang-server",
+      "inputs": [
+        "model path, GPU count, target context length"
+      ],
+      "kind": "tool",
+      "outputs": [
+        "a running SGLang /v1 endpoint plus a verification curl"
+      ],
+      "path": "tools/sglang/launch-sglang-server.md",
+      "ref": "tool:launch-sglang-server",
+      "related": [
+        "workflow:serve-sglang-model",
+        "tool:tune-sglang-config"
+      ],
+      "sections": {
+        "Constraints": "- Set `SGLANG_*` / `SGL_*` env vars before launch. - Flag names are version-sensitive; verify against `--help`.",
+        "How To Use": "1. Minimal: `python -m sglang.launch_server --model-path <model> --tp-size <gpus>`. 2. Add only what a constraint needs: - context: `--context-length N` - memory: `--mem-fraction-static 0.85`, `--kv-cache-dtype fp8_e4m3` - concurrency: `--m...",
+        "Related": "- `knowledge/sglang/server-args.md` - `knowledge/sglang/vllm-vs-sglang.md` - `tool:tune-sglang-config`",
+        "Source": "- `knowledge/sglang/server-args.md`",
+        "Use When": "Use to bring a model up on SGLang's OpenAI-compatible API.",
+        "Validation": "- `/v1/models` lists the model and chat returns tokens. - No OOM or KV-fit warnings at startup; RadixAttention active unless disabled."
+      },
+      "source": [
+        "knowledge/sglang/server-args.md"
+      ],
+      "status": "active",
+      "tags": [
+        "sglang",
+        "serving",
+        "openai",
+        "deploy",
+        "launch",
+        "api",
+        "srt"
+      ],
+      "task": "",
+      "title": "Launch SGLang Server",
+      "tools": [],
+      "tools_considered": [],
+      "tools_used": [],
+      "triggers": [],
+      "validation": [],
+      "workflow": "",
+      "workflow_update": ""
+    },
+    {
+      "aliases": [
         "out of memory",
         "cannot fit max_model_len",
         "preemption",
+        "sequence preempted",
+        "throughput collapse",
         "kv cache too small",
         "oom"
       ],
@@ -392,6 +451,64 @@
       ],
       "task": "",
       "title": "Tune vLLM Serving Config",
+      "tools": [],
+      "tools_considered": [],
+      "tools_used": [],
+      "triggers": [],
+      "validation": [],
+      "workflow": "",
+      "workflow_update": ""
+    },
+    {
+      "aliases": [
+        "tune sglang",
+        "sglang throughput",
+        "sglang latency",
+        "radix cache tuning",
+        "mem-fraction-static"
+      ],
+      "capabilities": [
+        "pick the right SGLang knob for a throughput/latency/memory goal",
+        "apply one-change-at-a-time tuning with RadixAttention in mind"
+      ],
+      "id": "tune-sglang-config",
+      "inputs": [
+        "a goal (throughput/latency/fit) and a bench_serving baseline"
+      ],
+      "kind": "tool",
+      "outputs": [
+        "a tuned SGLang flag/env set with measured improvement"
+      ],
+      "path": "tools/sglang/tune-sglang-config.md",
+      "ref": "tool:tune-sglang-config",
+      "related": [
+        "workflow:serve-sglang-model",
+        "tool:launch-sglang-server"
+      ],
+      "sections": {
+        "Constraints": "- Fix correctness before tuning; never tune around a numeric bug.",
+        "How To Use": "1. State the goal: throughput, latency, or memory fit. 2. Apply the matching order from `sglang/performance-tuning.md`: - throughput: raise `--mem-fraction-static`, `--max-running-requests`, `--chunked-prefill-size`; keep overlap scheduler...",
+        "Related": "- `knowledge/sglang/performance-tuning.md` - `knowledge/sglang/radixattention.md` - `tool:launch-sglang-server`",
+        "Source": "- `knowledge/sglang/performance-tuning.md`",
+        "Use When": "Use after a `sglang.bench_serving` baseline when throughput is low, latency high, or memory tight.",
+        "Validation": "- Each accepted change has a measured before/after. - Report the RadixAttention cache hit rate for prefix-heavy traffic."
+      },
+      "source": [
+        "knowledge/sglang/performance-tuning.md"
+      ],
+      "status": "active",
+      "tags": [
+        "sglang",
+        "tuning",
+        "throughput",
+        "latency",
+        "memory",
+        "radix",
+        "mem-fraction-static",
+        "chunked-prefill"
+      ],
+      "task": "",
+      "title": "Tune SGLang Config",
       "tools": [],
       "tools_considered": [],
       "tools_used": [],
@@ -698,12 +815,70 @@
       ],
       "workflow": "",
       "workflow_update": ""
+    },
+    {
+      "aliases": [
+        "serve with sglang",
+        "deploy sglang model",
+        "run model on sglang",
+        "sglang bringup"
+      ],
+      "capabilities": [],
+      "id": "serve-sglang-model",
+      "inputs": [],
+      "kind": "workflow",
+      "outputs": [],
+      "path": "workflows/serve-sglang-model.md",
+      "ref": "workflow:serve-sglang-model",
+      "related": [],
+      "sections": {
+        "Related Runs": "-",
+        "Source": "- `knowledge/sglang/server-args.md` - `knowledge/sglang/performance-tuning.md` - `knowledge/sglang/vllm-vs-sglang.md`",
+        "Tool Sequence": "- `tool:launch-sglang-server`: start the endpoint. - `tool:tune-sglang-config`: improve throughput/latency/fit with evidence.",
+        "Update Policy": "Update when a recurring SGLang launch flag, failure mode, or tuning step appears.",
+        "Use When": "Use to bring a model up on SGLang and tune it, including mapping from vLLM habits.",
+        "Validation Gates": "- Endpoint healthy and returning coherent tokens. - Performance changes backed by `bench_serving`; cache hit rate noted for prefix-heavy traffic.",
+        "Workflow": "1. Launch minimally with `tool:launch-sglang-server` (`python -m sglang.launch_server --model-path <m> --tp-size <gpus>`). 2. Smoke-test `/v1/models` and a chat/completion; sanity-check output quality. 3. If startup OOMs or KV won't fit, lo..."
+      },
+      "source": [
+        "knowledge/sglang/server-args.md"
+      ],
+      "status": "active",
+      "tags": [
+        "sglang",
+        "serving",
+        "deploy",
+        "openai",
+        "launch",
+        "radix",
+        "bringup"
+      ],
+      "task": "",
+      "title": "Serve A Model With SGLang",
+      "tools": [
+        "tool:launch-sglang-server",
+        "tool:tune-sglang-config"
+      ],
+      "tools_considered": [],
+      "tools_used": [],
+      "triggers": [
+        "serve a model with SGLang",
+        "deploy an SGLang OpenAI endpoint",
+        "bring up SGLang and tune it"
+      ],
+      "validation": [
+        "/v1/models lists the model and chat returns tokens",
+        "no OOM / KV-fit warnings at startup",
+        "tuning changes backed by sglang.bench_serving numbers"
+      ],
+      "workflow": "",
+      "workflow_update": ""
     }
   ],
   "counts": {
     "run": 0,
-    "tool": 7,
-    "workflow": 5
+    "tool": 9,
+    "workflow": 6
   },
   "source": "markdown",
   "version": "1.0.0"

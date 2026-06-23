@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/sgl-project/sglang",
+  "default_branch": "main",
+  "synced_to": "v0.5.13",
+  "synced_to_release_date": "2026-06-13",
+  "synced_on": "2026-06-23",
+  "engine_era": "v0.4+ (zero-overhead batch scheduler; SpecDecode V2 default in 0.5.13)",
+  "note": "YAX SGLang knowledge + code map reflect SGLang up to v0.5.13. To refresh, review only upstream commits newer than `synced_to`. After updating, bump `synced_to`/`synced_on` and add a CHANGELOG.md entry.",
+  "refresh_command": "git -C <sglang-clone> fetch --tags && git -C <sglang-clone> log --oneline v0.5.13..origin/main"
+}
