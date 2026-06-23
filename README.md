@@ -2,14 +2,15 @@
 
 YAX is a retrieval-first **LLM inference-engine engineering harness**: a compact
 toolbox plus knowledge base for working on
-[vLLM](https://github.com/vllm-project/vllm) and
-[SGLang](https://github.com/sgl-project/sglang) as an inference-engine developer
-and operator. It captures how to read and edit each codebase, what features exist
-today, and which engine arguments and environment variables matter on CUDA and
-ROCm.
+[vLLM](https://github.com/vllm-project/vllm),
+[SGLang](https://github.com/sgl-project/sglang), and
+[ATOM](https://github.com/ROCm/ATOM) (AMD ROCm/AITER) as an inference-engine
+developer and operator. It captures how to read and edit each codebase, what
+features exist today, and which engine arguments and environment variables matter
+on CUDA and ROCm.
 
 Engines are first-class: knowledge lives under `knowledge/<engine>/`, and the
-version-aware code map is per engine (`--engine vllm|sglang`).
+version-aware code map is per engine (`--engine vllm|sglang|atom`).
 
 It borrows its harness shape from the Zootopia toolbox: markdown is the source of
 truth, a small Python runtime makes search cheap, and instructions, knowledge,
@@ -62,6 +63,7 @@ YAX/
 ├── knowledge/         # compact knowledge library (namespaced by engine)
 │   ├── vllm/          # vLLM: architecture, serving, rocm, cuda, development
 │   ├── sglang/        # SGLang: architecture, RadixAttention, args, env, DSL, vs-vLLM
+│   ├── atom/          # ATOM (ROCm): AITER ops, config, quant, distributed/TBO, vs-vLLM
 │   └── shared/        # engine-agnostic: perf estimation (roofline) + perf factors
 ├── devmap/            # per-engine version-tagged code maps (vllm-*, sglang-*)
 ├── tools/             # tool cards, namespaced: tools/vllm/, tools/sglang/
@@ -97,6 +99,7 @@ rather than the whole history:
 ```bash
 python3 scripts/yax.py sync-status --engine vllm   --repo-path <vllm-clone>
 python3 scripts/yax.py sync-status --engine sglang --repo-path <sglang-clone>
+python3 scripts/yax.py sync-status --engine atom   --repo-path <atom-clone>
 # -> git log --oneline <synced_to>..origin/main
 ```
 
@@ -115,13 +118,14 @@ python3 scripts/yax.py where "scheduler decides which requests run" -V latest
 #   -> vllm/v1/core/sched/scheduler.py  (vLLM V1 layout)
 python3 scripts/yax.py where "radix attention prefix reuse" --engine sglang
 #   -> python/sglang/srt/mem_cache/radix_cache.py
+python3 scripts/yax.py where "two-batch overlap expert parallel" --engine atom
+#   -> docs/distributed_guide.md + atom/distributed/ (ATOM, ROCm)
 ```
 
-Source of truth is `devmap/vllm-areas.jsonl` (vLLM) and `devmap/sglang-areas.jsonl`;
-the resolved per-version indexes are generated to
-`registry/vllm-codemap-by-version.json` and `registry/sglang-codemap-by-version.json`.
-Per-engine sync state lives in `devmap/vllm-sync-state.json` and
-`devmap/sglang-sync-state.json` (see `python3 scripts/yax.py sync-status -e sglang`).
+Source of truth is `devmap/<engine>-areas.jsonl` for each engine; the resolved
+per-version indexes are generated to `registry/<engine>-codemap-by-version.json`.
+Per-engine sync state lives in `devmap/<engine>-sync-state.json` (see
+`python3 scripts/yax.py sync-status -e atom`).
 
 ## Design Principles
 
@@ -136,14 +140,17 @@ Per-engine sync state lives in `devmap/vllm-sync-state.json` and
 
 ## Scope And Accuracy Note
 
-Both engines evolve quickly. vLLM cards describe the **V1 engine era** (default
-since 0.8.x); SGLang cards describe the **zero-overhead-scheduler era** (v0.4+).
-Cards flag version-sensitive behavior and tell you to confirm exact names against
-the installed version:
+All engines evolve quickly. vLLM cards describe the **V1 engine era** (default
+since 0.8.x); SGLang cards describe the **zero-overhead-scheduler era** (v0.4+);
+ATOM cards describe **v0.1.x** (young, AMD-only, AITER-based — internal paths are
+best-effort and link the authoritative `docs/` guides). Cards flag
+version-sensitive behavior and tell you to confirm exact names against the
+installed version:
 
 - vLLM: `vllm serve --help`, `vllm/engine/arg_utils.py`, `vllm/envs.py`.
 - SGLang: `python -m sglang.launch_server --help`,
   `python/sglang/srt/server_args.py`, `python/sglang/srt/environ.py`.
+- ATOM: `python -m atom.entrypoints.openai_server --help`, and the authoritative
+  `docs/` guides (ATOM is young; internal module paths are best-effort).
 
-Sync baselines: see `devmap/vllm-sync-state.json` and
-`devmap/sglang-sync-state.json`.
+Sync baselines: see `devmap/<engine>-sync-state.json`.

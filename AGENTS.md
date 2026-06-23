@@ -1,10 +1,10 @@
 # YAX Agent Guide
 
 YAX is an LLM inference-engine engineering toolbox plus compact knowledge base,
-covering **vLLM** and **SGLang**. Start from retrieval, load the smallest useful
-tools/workflows, execute with validation, and save reusable learning back into
-the toolbox. Engine-specific knowledge is under `knowledge/<engine>/`; the code
-map is per engine via `--engine`.
+covering **vLLM**, **SGLang**, and **ATOM** (ROCm/ATOM, AMD-only). Start from
+retrieval, load the smallest useful tools/workflows, execute with validation, and
+save reusable learning back into the toolbox. Engine-specific knowledge is under
+`knowledge/<engine>/`; the code map is per engine via `--engine`.
 
 ## Retrieval Order
 
@@ -45,6 +45,8 @@ map is per engine via `--engine`.
 - SGLang server args / performance / RadixAttention specifically:
   `knowledge/sglang/server-args.md`, `knowledge/sglang/performance-tuning.md`,
   `knowledge/sglang/radixattention.md`
+- ATOM hub (AMD/ROCm, AITER kernels, MXFP4/online quant, TBO, P/D disagg):
+  `knowledge/atom/README.md`; AITER ops `knowledge/atom/aiter-model-ops.md`
 - Which folders/files to check or edit for a problem (version-aware code map):
   `python3 scripts/yax.py where "<problem>" -V <version>` (add `--engine sglang`
   for SGLang) and `knowledge/vllm/development/codebase-map.md`
@@ -82,12 +84,13 @@ versions. Before reading code, ask the code map where to look:
 ```bash
 python3 scripts/yax.py where "<problem>" -V 0.8.5                  # vLLM (default)
 python3 scripts/yax.py where "<problem>" --engine sglang -V 0.5.13 # SGLang
+python3 scripts/yax.py where "<problem>" --engine atom   -V 0.1.5  # ATOM (ROCm)
 ```
 
 It returns the folders/files/entry-points for that engine+version's layout
-(vLLM V0/V1 and SGLang pre/post-0.4 relocations handled automatically). Confirm
-exact paths against the checkout. Add or fix areas in `devmap/vllm-areas.jsonl`
-(vLLM) or `devmap/sglang-areas.jsonl` and rerun `python3 scripts/yax.py index`
+(vLLM V0/V1 and SGLang pre/post-0.4 relocations handled automatically; ATOM links
+its authoritative `docs/` guide). Confirm exact paths against the checkout. Add or
+fix areas in `devmap/<engine>-areas.jsonl` and rerun `python3 scripts/yax.py index`
 when a path has moved.
 
 ## Engine Engineering Rules
@@ -99,6 +102,8 @@ when a path has moved.
     `vllm serve --help`.
   - SGLang: `python/sglang/srt/server_args.py` (args),
     `python/sglang/srt/environ.py` (env); `python -m sglang.launch_server --help`.
+  - ATOM: `docs/configuration_guide.md` + `docs/environment_variables.md`
+    (authoritative); `python -m atom.entrypoints.openai_server --help`.
 - **Don't copy flags across engines.** Translate intent via
   `knowledge/sglang/vllm-vs-sglang.md` (e.g. `--gpu-memory-utilization` ⇄
   `--mem-fraction-static`).
@@ -115,8 +120,9 @@ when a path has moved.
 ## Related Repo Rules
 
 - Record related repositories by GitHub URL, not a host-specific checkout path.
-- If vLLM (`vllm-project/vllm`) or SGLang (`sgl-project/sglang`) is needed locally
-  but absent, clone it into the workspace first, then use repo-relative paths.
+- If vLLM (`vllm-project/vllm`), SGLang (`sgl-project/sglang`), or ATOM
+  (`ROCm/ATOM`) is needed locally but absent, clone it into the workspace first,
+  then use repo-relative paths.
 
 ## Maintenance Rules
 

@@ -23,7 +23,8 @@ Per engine `<engine>` in {`vllm`, `sglang`}:
 - `<engine>-sync-state.json` — the upstream release this map reflects (see
   `scripts/yax.py sync-status -e <engine>`).
 
-Current engines: `vllm-*` and `sglang-*`.
+Current engines: `vllm-*`, `sglang-*`, and `atom-*` (ROCm/ATOM). ATOM is young;
+its area paths are best-effort and each links the authoritative `docs/` guide.
 
 ## Use
 

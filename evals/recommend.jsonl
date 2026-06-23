@@ -20,4 +20,7 @@
 {"query": "serve a model with sglang on 2 gpus", "expect": "workflow:serve-sglang-model", "max_rank": 1, "cluster": "sglang"}
 {"query": "launch the sglang openai server", "expect": "tool:launch-sglang-server", "max_rank": 2, "cluster": "sglang"}
 {"query": "tune sglang throughput mem-fraction-static radix cache", "expect": "tool:tune-sglang-config", "max_rank": 2, "cluster": "sglang"}
+{"query": "serve a model with atom on amd rocm with aiter", "expect": "workflow:serve-atom-model", "max_rank": 1, "cluster": "atom"}
+{"query": "launch the atom openai server aiter optimized model", "expect": "tool:launch-atom-server", "max_rank": 2, "cluster": "atom"}
+{"query": "tune atom two-batch overlap mxfp4 tunableop throughput", "expect": "tool:tune-atom-config", "max_rank": 2, "cluster": "atom"}
 {"query": "how do i bake sourdough bread at home", "expect_none": true, "cluster": "offdomain"}

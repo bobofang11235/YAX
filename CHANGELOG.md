@@ -43,6 +43,19 @@ Newest first.
 
 - (pending changes go here)
 
+## 2026-06-23 — Add ATOM (ROCm/ATOM) as a third engine
+
+- ATOM synced to: **v0.1.5** (2026-06-22). Registered `atom` in `ENGINES`.
+- ATOM code map: `devmap/atom-areas.jsonl` (14 areas), `atom-versions.json`,
+  `atom-sync-state.json`. Areas link the authoritative `docs/` guides since ATOM
+  is young and internal module paths are best-effort.
+- `knowledge/atom/`: architecture, configuration, environment variables, features,
+  AITER model ops, quantization (MXFP4/online), distributed + TBO + P/D disagg,
+  performance tuning, and a vLLM-vs-ATOM comparison.
+- ATOM tools (`launch-atom-server`, `tune-atom-config`), the `serve-atom-model`
+  workflow, and golden routing eval cases.
+- Updated all navigation docs to present vLLM / SGLang / ATOM equally.
+
 ## 2026-06-23 — Symmetric multi-engine structure
 
 - Reorganized for engine symmetry: `knowledge/{vllm,sglang,shared}`,

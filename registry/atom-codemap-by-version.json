@@ -1,0 +1,687 @@
+{
+  "by_version": {
+    "0.1.0": [
+      {
+        "area": "Benchmarks / profiling / trace analysis tools",
+        "entry": [
+          "python -m atom.benchmarks.benchmark_serving"
+        ],
+        "files": [
+          "atom/benchmarks/benchmark_serving.py",
+          "tools/parse_trace.py",
+          "tools/analyze_trace_summary.py"
+        ],
+        "folders": [
+          "atom/benchmarks/",
+          "tools/"
+        ],
+        "id": "benchmarks-profiling",
+        "note": "Online serving benchmark + trace collection (--torch-profiler-dir/--mark-trace) and per-kernel/per-layer analysis in tools/."
+      },
+      {
+        "area": "Configuration: config classes / CLI arguments / env vars",
+        "entry": [
+          "Config"
+        ],
+        "files": [
+          "docs/configuration_guide.md",
+          "atom/config.py"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "configuration",
+        "note": "Config classes + CLI args + env vars. docs/configuration_guide.md is authoritative; arg parsing lives in the entrypoints/config (verify path)."
+      },
+      {
+        "area": "Distributed: TP/DP/EP, MORI all-to-all, Two-Batch Overlap (TBO)",
+        "entry": [
+          "-tp",
+          "-dp",
+          "-ep"
+        ],
+        "files": [
+          "docs/distributed_guide.md"
+        ],
+        "folders": [
+          "atom/distributed/",
+          "docs/"
+        ],
+        "id": "distributed-tbo",
+        "note": "TP/DP/EP with MORI all-to-all. TBO splits a batch into two micro-batches to overlap expert-parallel comms with compute (DeepSeek-style). docs/distributed_guide.md is authoritative."
+      },
+      {
+        "area": "Engine / scheduler / KV cache / block allocation / prefix caching",
+        "entry": [
+          "Scheduler",
+          "BlockManager"
+        ],
+        "files": [
+          "docs/scheduling_kv_cache_guide.md",
+          "atom/engine/scheduler.py",
+          "atom/engine/block_manager.py"
+        ],
+        "folders": [
+          "atom/engine/",
+          "docs/"
+        ],
+        "id": "engine-scheduler",
+        "note": "Batch scheduling, block allocation, xxhash64-based prefix caching. nano-vllm-style engine under atom/engine/ (verify); the guide is authoritative."
+      },
+      {
+        "area": "Entrypoints / OpenAI-compatible server / profiler endpoints",
+        "entry": [
+          "python -m atom.entrypoints.openai_server"
+        ],
+        "files": [
+          "atom/entrypoints/openai_server.py",
+          "docs/serving_benchmarking_guide.md"
+        ],
+        "folders": [
+          "atom/entrypoints/",
+          "docs/"
+        ],
+        "id": "entrypoints-server",
+        "note": "OpenAI-compatible server + /start_profile,/stop_profile. Also atom/examples/simple_inference.py for offline."
+      },
+      {
+        "area": "Environment variables (ATOM_*)",
+        "entry": [
+          "ATOM_*"
+        ],
+        "files": [
+          "docs/environment_variables.md"
+        ],
+        "folders": [
+          "docs/",
+          "atom/"
+        ],
+        "id": "environment-variables",
+        "note": "All ATOM_* variables are documented in docs/environment_variables.md (authoritative). AITER/ROCm env (e.g. HIP_VISIBLE_DEVICES, NCCL/RCCL) also apply."
+      },
+      {
+        "area": "Model ops / AITER kernel integration (linear/attention/MoE/norm)",
+        "entry": [
+          "AITER wrappers"
+        ],
+        "files": [
+          "docs/model_ops_guide.md",
+          "atom/layers/attention.py",
+          "atom/layers/linear.py"
+        ],
+        "folders": [
+          "atom/layers/",
+          "docs/"
+        ],
+        "id": "model-ops-aiter",
+        "note": "ATOM's core value: AITER (ASM/CK/Triton) kernels wrapped as linear/attention/MoE/norm ops. docs/model_ops_guide.md is authoritative."
+      },
+      {
+        "area": "Model runner / forward / piecewise torch.compile / CUDA graphs",
+        "entry": [
+          "ModelRunner"
+        ],
+        "files": [
+          "docs/compilation_cudagraph_guide.md",
+          "atom/engine/model_runner.py"
+        ],
+        "folders": [
+          "atom/engine/",
+          "docs/"
+        ],
+        "id": "model-runner-compilation",
+        "note": "4 piecewise torch.compile levels with CUDA graph capture; default opt level 3. docs/compilation_cudagraph_guide.md is authoritative."
+      },
+      {
+        "area": "Models / add an architecture / weight loading",
+        "entry": [
+          "load_weights"
+        ],
+        "files": [
+          "docs/model_support_guide.md",
+          "atom/models/llama.py"
+        ],
+        "folders": [
+          "atom/models/",
+          "docs/"
+        ],
+        "id": "models",
+        "note": "One file per architecture under atom/models/ (verify). Auto-detects HF architecture. Supported: Llama, Qwen3(/MoE/Next), DeepSeek V2/V3, Mixtral, GLM-4/5/5.2, GPT-OSS, Kimi-K2, MiMo-V2."
+      },
+      {
+        "area": "Prefill/Decode (P/D) disaggregation / Mooncake / MORI-IO KV transfer",
+        "entry": [],
+        "files": [
+          "docs/distributed_guide.md",
+          "recipes/"
+        ],
+        "folders": [
+          "atom/",
+          "docs/",
+          "recipes/"
+        ],
+        "id": "pd-disaggregation",
+        "note": "Prefill and decode on separate GPU nodes with RDMA KV transfer (MORI-IO; Mooncake push-mode). See PD disaggregation guide / recipes (verify exact paths)."
+      },
+      {
+        "area": "Quantization (FP8 / MXFP4 / INT8 / INT4 / online quant)",
+        "entry": [
+          "--online_quant_config",
+          "--kv_cache_dtype"
+        ],
+        "files": [
+          "docs/configuration_guide.md",
+          "atom/layers/"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "quantization",
+        "note": "FP8/MXFP4/INT8/INT4 auto-detected from HF config; online re-quant to PTPC-FP8/MXFP4 at load via --online_quant_config. Quant kernels via AITER (see model-ops-aiter)."
+      },
+      {
+        "area": "Deployment recipes (per-model configs)",
+        "entry": [],
+        "files": [
+          "recipes/GLM-5.md",
+          "recipes/MiMo-V2.md",
+          "recipes/Kimi-K2-Thinking.md"
+        ],
+        "folders": [
+          "recipes/"
+        ],
+        "id": "recipes",
+        "note": "Ready-made per-model deployment recipes (DeepSeek-R1, Qwen3-235B, Qwen3-Next, Kimi-K2, GLM-5, GPT-OSS-120B, TBO, PD). Start here to serve a specific model."
+      },
+      {
+        "area": "Speculative decoding (MTP + EAGLE proposer)",
+        "entry": [
+          "--method mtp",
+          "--num-speculative-tokens"
+        ],
+        "files": [
+          "docs/serving_benchmarking_guide.md"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "speculative",
+        "note": "Multi-Token Prediction with an EAGLE proposer. Enable via --method mtp --num-speculative-tokens N. Spec module under atom/ (verify)."
+      },
+      {
+        "area": "Tests / CI",
+        "entry": [],
+        "files": [
+          "tests/"
+        ],
+        "folders": [
+          "tests/",
+          ".github/"
+        ],
+        "id": "tests",
+        "note": "Tests under tests/; CI in .github/. Accuracy via lm-eval against the OpenAI endpoint (gsm8k, etc.)."
+      }
+    ],
+    "0.1.5": [
+      {
+        "area": "Benchmarks / profiling / trace analysis tools",
+        "entry": [
+          "python -m atom.benchmarks.benchmark_serving"
+        ],
+        "files": [
+          "atom/benchmarks/benchmark_serving.py",
+          "tools/parse_trace.py",
+          "tools/analyze_trace_summary.py"
+        ],
+        "folders": [
+          "atom/benchmarks/",
+          "tools/"
+        ],
+        "id": "benchmarks-profiling",
+        "note": "Online serving benchmark + trace collection (--torch-profiler-dir/--mark-trace) and per-kernel/per-layer analysis in tools/."
+      },
+      {
+        "area": "Configuration: config classes / CLI arguments / env vars",
+        "entry": [
+          "Config"
+        ],
+        "files": [
+          "docs/configuration_guide.md",
+          "atom/config.py"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "configuration",
+        "note": "Config classes + CLI args + env vars. docs/configuration_guide.md is authoritative; arg parsing lives in the entrypoints/config (verify path)."
+      },
+      {
+        "area": "Distributed: TP/DP/EP, MORI all-to-all, Two-Batch Overlap (TBO)",
+        "entry": [
+          "-tp",
+          "-dp",
+          "-ep"
+        ],
+        "files": [
+          "docs/distributed_guide.md"
+        ],
+        "folders": [
+          "atom/distributed/",
+          "docs/"
+        ],
+        "id": "distributed-tbo",
+        "note": "TP/DP/EP with MORI all-to-all. TBO splits a batch into two micro-batches to overlap expert-parallel comms with compute (DeepSeek-style). docs/distributed_guide.md is authoritative."
+      },
+      {
+        "area": "Engine / scheduler / KV cache / block allocation / prefix caching",
+        "entry": [
+          "Scheduler",
+          "BlockManager"
+        ],
+        "files": [
+          "docs/scheduling_kv_cache_guide.md",
+          "atom/engine/scheduler.py",
+          "atom/engine/block_manager.py"
+        ],
+        "folders": [
+          "atom/engine/",
+          "docs/"
+        ],
+        "id": "engine-scheduler",
+        "note": "Batch scheduling, block allocation, xxhash64-based prefix caching. nano-vllm-style engine under atom/engine/ (verify); the guide is authoritative."
+      },
+      {
+        "area": "Entrypoints / OpenAI-compatible server / profiler endpoints",
+        "entry": [
+          "python -m atom.entrypoints.openai_server"
+        ],
+        "files": [
+          "atom/entrypoints/openai_server.py",
+          "docs/serving_benchmarking_guide.md"
+        ],
+        "folders": [
+          "atom/entrypoints/",
+          "docs/"
+        ],
+        "id": "entrypoints-server",
+        "note": "OpenAI-compatible server + /start_profile,/stop_profile. Also atom/examples/simple_inference.py for offline."
+      },
+      {
+        "area": "Environment variables (ATOM_*)",
+        "entry": [
+          "ATOM_*"
+        ],
+        "files": [
+          "docs/environment_variables.md"
+        ],
+        "folders": [
+          "docs/",
+          "atom/"
+        ],
+        "id": "environment-variables",
+        "note": "All ATOM_* variables are documented in docs/environment_variables.md (authoritative). AITER/ROCm env (e.g. HIP_VISIBLE_DEVICES, NCCL/RCCL) also apply."
+      },
+      {
+        "area": "Model ops / AITER kernel integration (linear/attention/MoE/norm)",
+        "entry": [
+          "AITER wrappers"
+        ],
+        "files": [
+          "docs/model_ops_guide.md",
+          "atom/layers/attention.py",
+          "atom/layers/linear.py"
+        ],
+        "folders": [
+          "atom/layers/",
+          "docs/"
+        ],
+        "id": "model-ops-aiter",
+        "note": "ATOM's core value: AITER (ASM/CK/Triton) kernels wrapped as linear/attention/MoE/norm ops. docs/model_ops_guide.md is authoritative."
+      },
+      {
+        "area": "Model runner / forward / piecewise torch.compile / CUDA graphs",
+        "entry": [
+          "ModelRunner"
+        ],
+        "files": [
+          "docs/compilation_cudagraph_guide.md",
+          "atom/engine/model_runner.py"
+        ],
+        "folders": [
+          "atom/engine/",
+          "docs/"
+        ],
+        "id": "model-runner-compilation",
+        "note": "4 piecewise torch.compile levels with CUDA graph capture; default opt level 3. docs/compilation_cudagraph_guide.md is authoritative."
+      },
+      {
+        "area": "Models / add an architecture / weight loading",
+        "entry": [
+          "load_weights"
+        ],
+        "files": [
+          "docs/model_support_guide.md",
+          "atom/models/llama.py"
+        ],
+        "folders": [
+          "atom/models/",
+          "docs/"
+        ],
+        "id": "models",
+        "note": "One file per architecture under atom/models/ (verify). Auto-detects HF architecture. Supported: Llama, Qwen3(/MoE/Next), DeepSeek V2/V3, Mixtral, GLM-4/5/5.2, GPT-OSS, Kimi-K2, MiMo-V2."
+      },
+      {
+        "area": "Prefill/Decode (P/D) disaggregation / Mooncake / MORI-IO KV transfer",
+        "entry": [],
+        "files": [
+          "docs/distributed_guide.md",
+          "recipes/"
+        ],
+        "folders": [
+          "atom/",
+          "docs/",
+          "recipes/"
+        ],
+        "id": "pd-disaggregation",
+        "note": "Prefill and decode on separate GPU nodes with RDMA KV transfer (MORI-IO; Mooncake push-mode). See PD disaggregation guide / recipes (verify exact paths)."
+      },
+      {
+        "area": "Quantization (FP8 / MXFP4 / INT8 / INT4 / online quant)",
+        "entry": [
+          "--online_quant_config",
+          "--kv_cache_dtype"
+        ],
+        "files": [
+          "docs/configuration_guide.md",
+          "atom/layers/"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "quantization",
+        "note": "FP8/MXFP4/INT8/INT4 auto-detected from HF config; online re-quant to PTPC-FP8/MXFP4 at load via --online_quant_config. Quant kernels via AITER (see model-ops-aiter)."
+      },
+      {
+        "area": "Deployment recipes (per-model configs)",
+        "entry": [],
+        "files": [
+          "recipes/GLM-5.md",
+          "recipes/MiMo-V2.md",
+          "recipes/Kimi-K2-Thinking.md"
+        ],
+        "folders": [
+          "recipes/"
+        ],
+        "id": "recipes",
+        "note": "Ready-made per-model deployment recipes (DeepSeek-R1, Qwen3-235B, Qwen3-Next, Kimi-K2, GLM-5, GPT-OSS-120B, TBO, PD). Start here to serve a specific model."
+      },
+      {
+        "area": "Speculative decoding (MTP + EAGLE proposer)",
+        "entry": [
+          "--method mtp",
+          "--num-speculative-tokens"
+        ],
+        "files": [
+          "docs/serving_benchmarking_guide.md"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "speculative",
+        "note": "Multi-Token Prediction with an EAGLE proposer. Enable via --method mtp --num-speculative-tokens N. Spec module under atom/ (verify)."
+      },
+      {
+        "area": "Tests / CI",
+        "entry": [],
+        "files": [
+          "tests/"
+        ],
+        "folders": [
+          "tests/",
+          ".github/"
+        ],
+        "id": "tests",
+        "note": "Tests under tests/; CI in .github/. Accuracy via lm-eval against the OpenAI endpoint (gsm8k, etc.)."
+      }
+    ],
+    "latest": [
+      {
+        "area": "Benchmarks / profiling / trace analysis tools",
+        "entry": [
+          "python -m atom.benchmarks.benchmark_serving"
+        ],
+        "files": [
+          "atom/benchmarks/benchmark_serving.py",
+          "tools/parse_trace.py",
+          "tools/analyze_trace_summary.py"
+        ],
+        "folders": [
+          "atom/benchmarks/",
+          "tools/"
+        ],
+        "id": "benchmarks-profiling",
+        "note": "Online serving benchmark + trace collection (--torch-profiler-dir/--mark-trace) and per-kernel/per-layer analysis in tools/."
+      },
+      {
+        "area": "Configuration: config classes / CLI arguments / env vars",
+        "entry": [
+          "Config"
+        ],
+        "files": [
+          "docs/configuration_guide.md",
+          "atom/config.py"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "configuration",
+        "note": "Config classes + CLI args + env vars. docs/configuration_guide.md is authoritative; arg parsing lives in the entrypoints/config (verify path)."
+      },
+      {
+        "area": "Distributed: TP/DP/EP, MORI all-to-all, Two-Batch Overlap (TBO)",
+        "entry": [
+          "-tp",
+          "-dp",
+          "-ep"
+        ],
+        "files": [
+          "docs/distributed_guide.md"
+        ],
+        "folders": [
+          "atom/distributed/",
+          "docs/"
+        ],
+        "id": "distributed-tbo",
+        "note": "TP/DP/EP with MORI all-to-all. TBO splits a batch into two micro-batches to overlap expert-parallel comms with compute (DeepSeek-style). docs/distributed_guide.md is authoritative."
+      },
+      {
+        "area": "Engine / scheduler / KV cache / block allocation / prefix caching",
+        "entry": [
+          "Scheduler",
+          "BlockManager"
+        ],
+        "files": [
+          "docs/scheduling_kv_cache_guide.md",
+          "atom/engine/scheduler.py",
+          "atom/engine/block_manager.py"
+        ],
+        "folders": [
+          "atom/engine/",
+          "docs/"
+        ],
+        "id": "engine-scheduler",
+        "note": "Batch scheduling, block allocation, xxhash64-based prefix caching. nano-vllm-style engine under atom/engine/ (verify); the guide is authoritative."
+      },
+      {
+        "area": "Entrypoints / OpenAI-compatible server / profiler endpoints",
+        "entry": [
+          "python -m atom.entrypoints.openai_server"
+        ],
+        "files": [
+          "atom/entrypoints/openai_server.py",
+          "docs/serving_benchmarking_guide.md"
+        ],
+        "folders": [
+          "atom/entrypoints/",
+          "docs/"
+        ],
+        "id": "entrypoints-server",
+        "note": "OpenAI-compatible server + /start_profile,/stop_profile. Also atom/examples/simple_inference.py for offline."
+      },
+      {
+        "area": "Environment variables (ATOM_*)",
+        "entry": [
+          "ATOM_*"
+        ],
+        "files": [
+          "docs/environment_variables.md"
+        ],
+        "folders": [
+          "docs/",
+          "atom/"
+        ],
+        "id": "environment-variables",
+        "note": "All ATOM_* variables are documented in docs/environment_variables.md (authoritative). AITER/ROCm env (e.g. HIP_VISIBLE_DEVICES, NCCL/RCCL) also apply."
+      },
+      {
+        "area": "Model ops / AITER kernel integration (linear/attention/MoE/norm)",
+        "entry": [
+          "AITER wrappers"
+        ],
+        "files": [
+          "docs/model_ops_guide.md",
+          "atom/layers/attention.py",
+          "atom/layers/linear.py"
+        ],
+        "folders": [
+          "atom/layers/",
+          "docs/"
+        ],
+        "id": "model-ops-aiter",
+        "note": "ATOM's core value: AITER (ASM/CK/Triton) kernels wrapped as linear/attention/MoE/norm ops. docs/model_ops_guide.md is authoritative."
+      },
+      {
+        "area": "Model runner / forward / piecewise torch.compile / CUDA graphs",
+        "entry": [
+          "ModelRunner"
+        ],
+        "files": [
+          "docs/compilation_cudagraph_guide.md",
+          "atom/engine/model_runner.py"
+        ],
+        "folders": [
+          "atom/engine/",
+          "docs/"
+        ],
+        "id": "model-runner-compilation",
+        "note": "4 piecewise torch.compile levels with CUDA graph capture; default opt level 3. docs/compilation_cudagraph_guide.md is authoritative."
+      },
+      {
+        "area": "Models / add an architecture / weight loading",
+        "entry": [
+          "load_weights"
+        ],
+        "files": [
+          "docs/model_support_guide.md",
+          "atom/models/llama.py"
+        ],
+        "folders": [
+          "atom/models/",
+          "docs/"
+        ],
+        "id": "models",
+        "note": "One file per architecture under atom/models/ (verify). Auto-detects HF architecture. Supported: Llama, Qwen3(/MoE/Next), DeepSeek V2/V3, Mixtral, GLM-4/5/5.2, GPT-OSS, Kimi-K2, MiMo-V2."
+      },
+      {
+        "area": "Prefill/Decode (P/D) disaggregation / Mooncake / MORI-IO KV transfer",
+        "entry": [],
+        "files": [
+          "docs/distributed_guide.md",
+          "recipes/"
+        ],
+        "folders": [
+          "atom/",
+          "docs/",
+          "recipes/"
+        ],
+        "id": "pd-disaggregation",
+        "note": "Prefill and decode on separate GPU nodes with RDMA KV transfer (MORI-IO; Mooncake push-mode). See PD disaggregation guide / recipes (verify exact paths)."
+      },
+      {
+        "area": "Quantization (FP8 / MXFP4 / INT8 / INT4 / online quant)",
+        "entry": [
+          "--online_quant_config",
+          "--kv_cache_dtype"
+        ],
+        "files": [
+          "docs/configuration_guide.md",
+          "atom/layers/"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "quantization",
+        "note": "FP8/MXFP4/INT8/INT4 auto-detected from HF config; online re-quant to PTPC-FP8/MXFP4 at load via --online_quant_config. Quant kernels via AITER (see model-ops-aiter)."
+      },
+      {
+        "area": "Deployment recipes (per-model configs)",
+        "entry": [],
+        "files": [
+          "recipes/GLM-5.md",
+          "recipes/MiMo-V2.md",
+          "recipes/Kimi-K2-Thinking.md"
+        ],
+        "folders": [
+          "recipes/"
+        ],
+        "id": "recipes",
+        "note": "Ready-made per-model deployment recipes (DeepSeek-R1, Qwen3-235B, Qwen3-Next, Kimi-K2, GLM-5, GPT-OSS-120B, TBO, PD). Start here to serve a specific model."
+      },
+      {
+        "area": "Speculative decoding (MTP + EAGLE proposer)",
+        "entry": [
+          "--method mtp",
+          "--num-speculative-tokens"
+        ],
+        "files": [
+          "docs/serving_benchmarking_guide.md"
+        ],
+        "folders": [
+          "atom/",
+          "docs/"
+        ],
+        "id": "speculative",
+        "note": "Multi-Token Prediction with an EAGLE proposer. Enable via --method mtp --num-speculative-tokens N. Spec module under atom/ (verify)."
+      },
+      {
+        "area": "Tests / CI",
+        "entry": [],
+        "files": [
+          "tests/"
+        ],
+        "folders": [
+          "tests/",
+          ".github/"
+        ],
+        "id": "tests",
+        "note": "Tests under tests/; CI in .github/. Accuracy via lm-eval against the OpenAI endpoint (gsm8k, etc.)."
+      }
+    ]
+  },
+  "engine": "atom",
+  "source": "atom-areas.jsonl",
+  "tags": [
+    "0.1.0",
+    "0.1.5",
+    "latest"
+  ],
+  "version": "1.0.0"
+}

@@ -233,6 +233,66 @@
     },
     {
       "aliases": [
+        "atom openai server",
+        "atom serve",
+        "deploy atom",
+        "run atom server",
+        "aiter optimized model"
+      ],
+      "capabilities": [
+        "start ATOM's OpenAI-compatible server on AMD/ROCm",
+        "set TP / KV dtype / MTP / online-quant flags correctly",
+        "smoke-test the endpoint"
+      ],
+      "id": "launch-atom-server",
+      "inputs": [
+        "model path, AMD GPU count, target precision"
+      ],
+      "kind": "tool",
+      "outputs": [
+        "a running ATOM /v1 endpoint plus a verification curl"
+      ],
+      "path": "tools/atom/launch-atom-server.md",
+      "ref": "tool:launch-atom-server",
+      "related": [
+        "workflow:serve-atom-model",
+        "tool:tune-atom-config"
+      ],
+      "sections": {
+        "Constraints": "- ROCm/AMD only; select GPUs with `HIP_VISIBLE_DEVICES`. - ATOM flags differ from vLLM (e.g. `--kv_cache_dtype`, `-tp`); verify with `--help`.",
+        "How To Use": "1. In the ATOM container (`rocm/atom-dev:latest`) or after `pip install ./ATOM`: ```bash # single GPU python -m atom.entrypoints.openai_server --model Qwen/Qwen3-0.6B --kv_cache_dtype fp8 # multi-GPU TP python -m atom.entrypoints.openai_ser...",
+        "Related": "- `knowledge/atom/configuration.md` - `knowledge/atom/quantization.md` - `tool:tune-atom-config`",
+        "Source": "- `knowledge/atom/configuration.md`",
+        "Use When": "Use to bring a model up on ATOM's OpenAI-compatible API on AMD/ROCm.",
+        "Validation": "- `/v1/models` lists the model and chat returns tokens. - First run compiles (~10 min); subsequent starts are fast."
+      },
+      "source": [
+        "knowledge/atom/configuration.md"
+      ],
+      "status": "active",
+      "tags": [
+        "atom",
+        "rocm",
+        "aiter",
+        "serving",
+        "openai",
+        "deploy",
+        "launch",
+        "api",
+        "amd"
+      ],
+      "task": "",
+      "title": "Launch ATOM Server",
+      "tools": [],
+      "tools_considered": [],
+      "tools_used": [],
+      "triggers": [],
+      "validation": [],
+      "workflow": "",
+      "workflow_update": ""
+    },
+    {
+      "aliases": [
         "vllm serve",
         "openai server",
         "deploy model",
@@ -395,6 +455,67 @@
       ],
       "task": "",
       "title": "OOM And KV Cache Triage",
+      "tools": [],
+      "tools_considered": [],
+      "tools_used": [],
+      "triggers": [],
+      "validation": [],
+      "workflow": "",
+      "workflow_update": ""
+    },
+    {
+      "aliases": [
+        "tune atom",
+        "atom throughput",
+        "atom latency",
+        "tbo tuning",
+        "aiter backend",
+        "atom performance"
+      ],
+      "capabilities": [
+        "pick the right ATOM/AITER knob for a throughput/latency goal on AMD",
+        "apply one-change-at-a-time tuning with trace evidence"
+      ],
+      "id": "tune-atom-config",
+      "inputs": [
+        "a goal (throughput/latency/fit) and a benchmark_serving baseline"
+      ],
+      "kind": "tool",
+      "outputs": [
+        "a tuned ATOM flag/env set with measured improvement"
+      ],
+      "path": "tools/atom/tune-atom-config.md",
+      "ref": "tool:tune-atom-config",
+      "related": [
+        "workflow:serve-atom-model",
+        "tool:launch-atom-server"
+      ],
+      "sections": {
+        "Constraints": "- Fix correctness (lm-eval) before tuning; warm up before measuring (compile cost).",
+        "How To Use": "1. State the goal: throughput, latency, or memory fit. 2. Apply the order from `knowledge/atom/performance-tuning.md`: - keep piecewise torch.compile + CUDA graphs (default opt level 3); - quantize (FP8 / MXFP4 / `--kv_cache_dtype fp8`; try...",
+        "Related": "- `knowledge/atom/performance-tuning.md` - `knowledge/atom/aiter-model-ops.md` - `knowledge/atom/distributed-tbo.md`",
+        "Source": "- `knowledge/atom/performance-tuning.md`",
+        "Use When": "Use after an `atom.benchmarks.benchmark_serving` baseline when ATOM throughput is low or latency high on AMD GPUs.",
+        "Validation": "- Each accepted change has a measured before/after. - Trace shows the expected AITER kernels (no slow fallback)."
+      },
+      "source": [
+        "knowledge/atom/performance-tuning.md"
+      ],
+      "status": "active",
+      "tags": [
+        "atom",
+        "rocm",
+        "aiter",
+        "tuning",
+        "throughput",
+        "latency",
+        "tbo",
+        "mxfp4",
+        "tunableop",
+        "mtp"
+      ],
+      "task": "",
+      "title": "Tune ATOM Config",
       "tools": [],
       "tools_considered": [],
       "tools_used": [],
@@ -760,6 +881,68 @@
     },
     {
       "aliases": [
+        "serve with atom",
+        "deploy atom model",
+        "run model on atom",
+        "atom bringup",
+        "aiter optimized model"
+      ],
+      "capabilities": [],
+      "id": "serve-atom-model",
+      "inputs": [],
+      "kind": "workflow",
+      "outputs": [],
+      "path": "workflows/atom/serve-atom-model.md",
+      "ref": "workflow:serve-atom-model",
+      "related": [],
+      "sections": {
+        "Related Runs": "-",
+        "Source": "- `knowledge/atom/configuration.md` - `knowledge/atom/performance-tuning.md` - `knowledge/atom/vllm-vs-atom.md`",
+        "Tool Sequence": "- `tool:launch-atom-server`: start the endpoint. - `tool:tune-atom-config`: improve throughput/latency with evidence.",
+        "Update Policy": "Update when a recurring ATOM launch flag, recipe pattern, or failure mode appears.",
+        "Use When": "Use to bring a model up on ATOM (AMD/ROCm, AITER) and tune it. Consider a recipe from the ATOM repo for your exact model first.",
+        "Validation Gates": "- Endpoint healthy and returning coherent tokens; lm-eval accuracy acceptable. - Performance changes backed by benchmark + trace; AITER backend confirmed.",
+        "Workflow": "1. Use the ATOM container (`rocm/atom-dev:latest`) or install AITER + ATOM. 2. Check the `recipes/` for your model family (DeepSeek-R1, Qwen3-235B, GLM-5, GPT-OSS, Kimi-K2, ...) and copy its flags. 3. Launch with `tool:launch-atom-server` (..."
+      },
+      "source": [
+        "knowledge/atom/configuration.md"
+      ],
+      "status": "active",
+      "tags": [
+        "atom",
+        "rocm",
+        "aiter",
+        "serving",
+        "deploy",
+        "openai",
+        "amd",
+        "bringup",
+        "mxfp4",
+        "tbo"
+      ],
+      "task": "",
+      "title": "Serve A Model With ATOM",
+      "tools": [
+        "tool:launch-atom-server",
+        "tool:tune-atom-config"
+      ],
+      "tools_considered": [],
+      "tools_used": [],
+      "triggers": [
+        "serve a model with ATOM on AMD/ROCm",
+        "bring up ATOM and tune it",
+        "run a model on AITER"
+      ],
+      "validation": [
+        "/v1/models lists the model and chat returns tokens",
+        "accuracy checked with lm-eval before tuning",
+        "tuning changes backed by benchmark_serving + trace evidence"
+      ],
+      "workflow": "",
+      "workflow_update": ""
+    },
+    {
+      "aliases": [
         "serve model",
         "deploy model",
         "bring up model",
@@ -877,8 +1060,8 @@
   ],
   "counts": {
     "run": 0,
-    "tool": 9,
-    "workflow": 6
+    "tool": 11,
+    "workflow": 7
   },
   "source": "markdown",
   "version": "1.0.0"

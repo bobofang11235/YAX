@@ -14,6 +14,7 @@ only for human organization.
   - `development/`: build from source, add a model.
   - `debugging/`: OOM/KV triage, accuracy divergence triage.
 - `sglang/`: SGLang tools (launch server, tune config).
+- `atom/`: ATOM tools (launch server, tune config) — AMD/ROCm, AITER.
 
 ## Maintenance
 

@@ -1,0 +1,14 @@
+{
+  "description": "ATOM (ROCm/ATOM, 'AiTer Optimized Model') version eras for the code-map indexer. ATOM is a young, lightweight vLLM-like engine adapted from nano-vllm; the Python package lives under atom/ and authoritative docs under docs/. Internal module paths are best-effort -- the linked docs/ guide for each area is authoritative.",
+  "eras": [
+    {
+      "id": "v0.1.x",
+      "label": "Initial public releases",
+      "range": ">= 0.1.0",
+      "note": "Package `atom/` (entrypoints, engine, layers, models), docs/ guides, recipes/, tools/. Built on AITER; ROCm-only."
+    }
+  ],
+  "representative_tags": ["0.1.0", "0.1.5", "latest"],
+  "default_tag": "latest",
+  "how_to_read": "ATOM is new and evolving; layouts use a single era. Each area links its authoritative docs/ guide plus best-effort atom/ module paths -- confirm against the checkout."
+}

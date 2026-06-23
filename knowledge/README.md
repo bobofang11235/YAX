@@ -20,6 +20,9 @@ with engine-agnostic notes kept separate.
     codebase map.
 - `sglang/` — SGLang-specific knowledge: architecture (SRT), RadixAttention,
   server args, env vars, features, frontend DSL, performance, vLLM-vs-SGLang.
+- `atom/` — ATOM (ROCm/ATOM) knowledge: architecture, AITER model ops,
+  configuration, env vars, quantization (MXFP4/online), distributed/TBO,
+  performance, vLLM-vs-ATOM. ROCm-only.
 - `shared/` — engine-agnostic: performance estimation (roofline) and the catalog
   of performance factors.
 

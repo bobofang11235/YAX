@@ -27,7 +27,7 @@ DEVMAP_DIR = ROOT / "devmap"
 
 # YAX covers multiple inference engines symmetrically. Each engine has its own
 # `<engine>-*` code-map files under devmap/ and its own generated registry index.
-ENGINES = ("vllm", "sglang")
+ENGINES = ("vllm", "sglang", "atom")
 
 
 def engine_paths(engine):

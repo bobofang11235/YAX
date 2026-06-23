@@ -18,6 +18,10 @@ tool sequence, and validation gates. Retrieve via
 
 - `serve-sglang-model.md`: bring a model up on SGLang and tune it.
 
+### ATOM (`workflows/atom/`)
+
+- `serve-atom-model.md`: bring a model up on ATOM (AMD/ROCm, AITER) and tune it.
+
 ## Maintenance
 
 - Start from `templates/workflow-note.md`; reference only existing tool ids.

@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/ROCm/ATOM",
+  "default_branch": "main",
+  "synced_to": "v0.1.5",
+  "synced_to_release_date": "2026-06-22",
+  "synced_on": "2026-06-23",
+  "engine_era": "v0.1.x (AITER-based, ROCm-only; adapted from nano-vllm)",
+  "note": "YAX ATOM knowledge + code map reflect ATOM up to v0.1.5. ATOM moves fast and internal paths are best-effort; the docs/ guides are authoritative. To refresh, review upstream commits newer than `synced_to`, then bump `synced_to`/`synced_on` and add a CHANGELOG.md entry.",
+  "refresh_command": "git -C <atom-clone> fetch --tags && git -C <atom-clone> log --oneline v0.1.5..origin/main"
+}

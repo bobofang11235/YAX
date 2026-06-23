@@ -15,6 +15,7 @@ Human entrypoint to YAX. Agents should use the runtime
   ```bash
   python3 scripts/yax.py where "<your problem>" -V <version>            # vLLM
   python3 scripts/yax.py where "<your problem>" --engine sglang -V 0.5.13
+  python3 scripts/yax.py where "<your problem>" --engine atom   -V 0.1.5
   ```
 
 ## Quick Map
@@ -35,12 +36,19 @@ Human entrypoint to YAX. Agents should use the runtime
 - RadixAttention / DSL → `knowledge/sglang/radixattention.md`,
   `knowledge/sglang/frontend-language.md`
 
+### ATOM (AMD ROCm / AITER)
+- Serve a model → `workflows/atom/serve-atom-model.md`
+- Hub / AITER ops → `knowledge/atom/README.md`, `knowledge/atom/aiter-model-ops.md`
+- Config / env / quant → `knowledge/atom/configuration.md`,
+  `knowledge/atom/environment-variables.md`, `knowledge/atom/quantization.md`
+- Distributed / TBO / P-D → `knowledge/atom/distributed-tbo.md`
+
 ### Shared
 - Estimate memory/throughput → `knowledge/shared/performance-estimation.md`
 - Performance factors catalog → `knowledge/shared/performance-factors.md`
 
 ## Generated Registry
 
-`registry/toolbox-index.json` (cards) plus `registry/vllm-codemap-by-version.json`
-and `registry/sglang-codemap-by-version.json` (per-engine code maps) are
+`registry/toolbox-index.json` (cards) plus per-engine code maps
+(`registry/<engine>-codemap-by-version.json` for vllm / sglang / atom) are
 generated. Rebuild all with `python3 scripts/yax.py index`; never edit by hand.
