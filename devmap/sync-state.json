@@ -1,0 +1,10 @@
+{
+  "vllm_repo": "https://github.com/vllm-project/vllm",
+  "default_branch": "main",
+  "synced_to": "v0.23.0",
+  "synced_to_release_date": "2026-06-15",
+  "synced_on": "2026-06-23",
+  "engine_era": "v1 (V0 engine removed in 0.11.0)",
+  "note": "YAX knowledge + devmap reflect vLLM up to v0.23.0. To refresh, review only upstream commits newer than `synced_to`. After updating, bump `synced_to`/`synced_on` and add a CHANGELOG.md entry.",
+  "refresh_command": "git -C <vllm-clone> fetch --tags && git -C <vllm-clone> log --oneline v0.23.0..origin/main"
+}

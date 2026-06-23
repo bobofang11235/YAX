@@ -1,0 +1,21 @@
+{
+  "description": "vLLM version eras for the code-map indexer. Paths move between versions; the indexer resolves each area's layout for the requested tag.",
+  "eras": [
+    {
+      "id": "v0",
+      "label": "V0 engine era",
+      "range": "<= 0.7.x",
+      "note": "Engine logic in vllm/engine, vllm/core, vllm/worker, vllm/executor. V1 (vllm/v1) does not exist or is experimental."
+    },
+    {
+      "id": "v1",
+      "label": "V1 engine era",
+      "range": ">= 0.8.0",
+      "note": "V1 (vllm/v1) becomes the default engine. Scheduler, KV cache, worker, attention, sampler move under vllm/v1. The legacy V0 tree still exists alongside until it is removed around 0.11.x."
+    }
+  ],
+  "v0_removed_after": "0.10.999",
+  "representative_tags": ["0.7.3", "0.8.5", "0.10.1", "0.11.0", "0.23.0", "latest"],
+  "default_tag": "latest",
+  "how_to_read": "Each area in areas.jsonl lists one or more layouts with optional `since`/`until` version bounds. The first layout whose range contains the requested version wins; `latest` resolves to the newest (V1) layout."
+}

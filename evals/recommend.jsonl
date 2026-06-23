@@ -1,0 +1,20 @@
+# Golden routing cases for YAX recommend. One JSON object per line.
+# Fields: query, expect (ref), max_rank, cluster, forbid, expect_none.
+# Run: python3 scripts/yax.py eval
+{"query": "serve a llama model behind the openai api on 2 gpus", "expect": "workflow:serve-new-model", "max_rank": 1, "cluster": "serving"}
+{"query": "deploy an unsupported model architecture", "expect": "workflow:serve-new-model", "max_rank": 2, "cluster": "serving"}
+{"query": "start vllm openai server smoke test", "expect": "tool:launch-openai-server", "max_rank": 2, "cluster": "serving"}
+{"query": "improve throughput tokens per second tuning", "expect": "workflow:optimize-throughput", "max_rank": 1, "cluster": "perf"}
+{"query": "reduce latency time to first token", "expect": "workflow:optimize-throughput", "max_rank": 2, "cluster": "perf"}
+{"query": "benchmark serving throughput before and after", "expect": "tool:benchmark-serving", "max_rank": 2, "cluster": "perf"}
+{"query": "which batching knob max-num-batched-tokens to tune", "expect": "tool:tune-serving-config", "max_rank": 3, "cluster": "perf"}
+{"query": "out of memory cannot fit max_model_len kv cache", "expect": "tool:oom-kv-triage", "max_rank": 2, "cluster": "memory"}
+{"query": "sequence preempted throughput collapse", "expect": "tool:oom-kv-triage", "max_rank": 3, "cluster": "memory"}
+{"query": "model output is gibberish wrong after fp8 quantization", "expect": "workflow:debug-accuracy", "max_rank": 2, "cluster": "accuracy"}
+{"query": "accuracy divergence bisect dtype backend", "expect": "tool:accuracy-divergence", "max_rank": 2, "cluster": "accuracy"}
+{"query": "build vllm from source editable install for development", "expect": "tool:build-from-source", "max_rank": 2, "cluster": "dev"}
+{"query": "open a pull request add a feature to vllm", "expect": "workflow:contribute-feature", "max_rank": 1, "cluster": "dev"}
+{"query": "add a new model architecture register load_weights", "expect": "tool:add-new-model", "max_rank": 2, "cluster": "dev"}
+{"query": "run a model on amd rocm mi300 aiter tunableop", "expect": "workflow:rocm-bringup", "max_rank": 1, "cluster": "rocm"}
+{"query": "fp8 fnuz ocp format mismatch on amd", "expect": "workflow:rocm-bringup", "max_rank": 3, "cluster": "rocm"}
+{"query": "how do i bake sourdough bread at home", "expect_none": true, "cluster": "offdomain"}
