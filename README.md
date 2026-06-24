@@ -24,7 +24,7 @@ task -> retrieve tools/workflows -> execute with validation -> save run -> updat
 
 ```mermaid
 flowchart TD
-  task["Engine task (vLLM / SGLang)"] --> retrieve["python3 scripts/yax.py recommend '<task>'"]
+  task["Engine task (vLLM / SGLang / ATOM)"] --> retrieve["python3 scripts/yax.py recommend '<task>'"]
   retrieve --> choose["Choose smallest matching workflow/tool"]
   choose --> context["Read linked knowledge only as needed"]
   context --> execute["Execute with the workflow validation gates"]
