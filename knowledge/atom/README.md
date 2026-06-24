@@ -17,6 +17,8 @@ ATOM is **ROCm-only** (AMD GPUs). If you need NVIDIA, use vLLM or SGLang.
 - `aiter-model-ops.md`: AITER kernel integration (ASM/CK/Triton) — ATOM's core.
 - `quantization.md`: FP8/MXFP4/INT8/INT4 and online quantization.
 - `distributed-tbo.md`: TP/DP/EP, MORI all-to-all, Two-Batch Overlap, P/D disagg.
+- `atomesh-orchestration.md`: ATOMesh cluster control plane (routing, P/D
+  disaggregation, KV-aware scheduling) that delegates to ATOM/vLLM/SGLang.
 - `performance-tuning.md`: tuning order for ATOM.
 - `vllm-vs-atom.md`: how ATOM relates to vLLM (and SGLang).
 

@@ -43,6 +43,14 @@ Newest first.
 
 - (pending changes go here)
 
+## 2026-06-24 — ATOMesh orchestration note
+
+- Added `knowledge/atom/atomesh-orchestration.md`: ATOMesh as a cluster control
+  plane above engines (request routing, prefill/decode disaggregation, KV-aware
+  scheduling) that delegates execution to ATOM/vLLM/SGLang; clarifies the
+  cluster-level vs engine-level scheduling split. Cross-linked from the ATOM hub
+  and distributed note. Source: ROCm Blogs ATOMesh/ATOM, MI355X article.
+
 ## 2026-06-24 — Improve multi-engine ergonomics
 
 - Added direct `knowledge-search` and a generated `registry/knowledge-index.json`

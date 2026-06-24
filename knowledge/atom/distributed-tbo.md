@@ -45,6 +45,7 @@ memory. Best for MoE models with DP attention; see the TBO recipe.
 
 ## Related
 
+- `knowledge/atom/atomesh-orchestration.md` (cluster-level P/D routing above the engine)
 - `knowledge/atom/performance-tuning.md`
 - `knowledge/atom/features-overview.md`
 - `knowledge/atom/recipes` (see `devmap` area `recipes`)

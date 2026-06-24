@@ -1,6 +1,6 @@
 {
   "counts": {
-    "atom": 9,
+    "atom": 10,
     "sglang": 8,
     "shared": 2,
     "vllm": 18
@@ -62,6 +62,32 @@
       "aliases": [],
       "capabilities": [],
       "engine": "atom",
+      "id": "atom/atomesh-orchestration",
+      "kind": "knowledge",
+      "path": "knowledge/atom/atomesh-orchestration.md",
+      "ref": "knowledge:atom/atomesh-orchestration",
+      "related": [],
+      "sections": {
+        "Avoid": "- Calling ATOMesh a \"fourth engine\" \u2014 it is a control plane over engines. - Confusing ATOMesh routing with an engine's batch scheduler (two distinct tiers). - Assuming ATOMesh replaces AITER/MORI/RCCL; it sits above and connects them.",
+        "Lesson": "**ATOMesh is an orchestration / control-plane layer that sits *above* inference engines** \u2014 a distributed inference gateway. It does not execute models itself; it routes and schedules requests across a cluster and **delegates execution to a...",
+        "Related": "- `knowledge/atom/distributed-tbo.md` (engine-level TP/DP/EP, TBO, P/D transport) - `knowledge/atom/architecture.md` - `knowledge/atom/vllm-vs-atom.md` - `knowledge/sglang/architecture.md`, `knowledge/vllm/architecture/scheduler-batching.md...",
+        "Rules": "- Put cluster-serving policy (routing, P/D, KV-aware placement, lifecycle, scaling) in ATOMesh; keep model execution in the engine. Changing routing should not require editing the GPU execution path. - For long-context / prefill-heavy clust...",
+        "Source": "- ATOMesh: https://rocm.blogs.amd.com/software-tools-optimization/atomesh-inference/README.html - ATOM engine: https://rocm.blogs.amd.com/software-tools-optimization/atom-inference-engine/README.html - MI355X distributed inference: https://...",
+        "Use When": "Use when scaling ATOM/vLLM/SGLang across a cluster on AMD Instinct GPUs, doing prefill/decode (P/D) disaggregation, KV-aware request routing, or reasoning about the difference between *cluster-level* and *engine-level* scheduling. ATOMesh i..."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOMesh Orchestration (Cluster Control Plane)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
       "id": "atom/configuration",
       "kind": "knowledge",
       "path": "knowledge/atom/configuration.md",
@@ -96,7 +122,7 @@
       "sections": {
         "Avoid": "- Enabling P/D disaggregation without the RDMA fabric/transport configured. - Comparing MoE throughput without noting TBO and EP settings.",
         "Lesson": "### Parallelism - **TP** (`-tp N`): shard layers across GPUs. - **DP**: replicas; pairs with EP for MoE. - **EP**: shard MoE experts, using **MORI all-to-all** for expert routing comms. ### Two-Batch Overlap (TBO) Following DeepSeek's syste...",
-        "Related": "- `knowledge/atom/performance-tuning.md` - `knowledge/atom/features-overview.md` - `knowledge/atom/recipes` (see `devmap` area `recipes`)",
+        "Related": "- `knowledge/atom/atomesh-orchestration.md` (cluster-level P/D routing above the engine) - `knowledge/atom/performance-tuning.md` - `knowledge/atom/features-overview.md` - `knowledge/atom/recipes` (see `devmap` area `recipes`)",
         "Rules": "- For MoE at scale, combine EP + DP attention + TBO; measure comms overlap (TBO should hide most all-to-all latency). - Use P/D disaggregation when prefill and decode have very different resource profiles or you need independent scaling; ot...",
         "Source": "- `docs/distributed_guide.md`; ATOM README (TBO, PD recipes) - https://github.com/ROCm/ATOM",
         "Use When": "Use when scaling ATOM across GPUs/nodes, tuning MoE expert parallelism, or configuring prefill/decode disaggregation. Authoritative: `docs/distributed_guide.md`."
