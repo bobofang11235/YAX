@@ -8,7 +8,7 @@ save reusable learning back into the toolbox. Engine-specific knowledge is under
 
 ## Retrieval Order
 
-1. For unfamiliar or non-trivial tasks (vLLM or SGLang), run
+1. For unfamiliar or non-trivial tasks (vLLM, SGLang, or ATOM), run
    `python3 scripts/yax.py recommend "<task>"`. Name the engine in the query.
 2. Read the top-ranked workflow first when one matches.
 3. Read only the tool cards referenced by that workflow or recommendation.
@@ -78,7 +78,7 @@ save reusable learning back into the toolbox. Engine-specific knowledge is under
 
 ## Developing An Engine: Route By Version
 
-YAX helps **develop vLLM and SGLang**, where file layouts change between
+YAX helps **develop vLLM, SGLang, and ATOM**, where file layouts change between
 versions. Before reading code, ask the code map where to look:
 
 ```bash
@@ -105,8 +105,9 @@ when a path has moved.
   - ATOM: `docs/configuration_guide.md` + `docs/environment_variables.md`
     (authoritative); `python -m atom.entrypoints.openai_server --help`.
 - **Don't copy flags across engines.** Translate intent via
-  `knowledge/sglang/vllm-vs-sglang.md` (e.g. `--gpu-memory-utilization` ⇄
-  `--mem-fraction-static`).
+  `knowledge/sglang/vllm-vs-sglang.md` and `knowledge/atom/vllm-vs-atom.md`
+  (e.g. `--gpu-memory-utilization` ⇄ `--mem-fraction-static`, while ATOM uses
+  its own `docs/configuration_guide.md` / `--help` surface).
 - **Separate correctness from performance.** Fix accuracy/divergence first with a
   trusted baseline, then tune throughput/latency.
 - **Validate with evidence.** A serving or kernel change is not done until a
@@ -133,7 +134,8 @@ When developing YAX itself:
 3. Put reusable capabilities in `tools/` and recurring procedures in `workflows/`.
 4. Put task lineage and outcomes in `runs/`.
 5. Put background principles and distillations in `knowledge/`.
-6. Regenerate `registry/toolbox-index.json` after changing tools/workflows/runs.
+6. Regenerate `registry/toolbox-index.json` and `registry/knowledge-index.json`
+   after changing tools/workflows/runs/knowledge.
 7. Keep provenance: cards link to upstream source files or motivating runs.
 8. Do not make raw dumps or long articles default agent context.
 9. Run `python3 scripts/yax.py validate` after structural changes.

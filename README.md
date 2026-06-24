@@ -41,7 +41,7 @@ flowchart TD
 ## How Agents Should Use It
 
 1. Run `python3 scripts/yax.py recommend "<task>"` for any non-trivial task
-   (vLLM or SGLang).
+   (vLLM, SGLang, or ATOM).
 2. Read the top-ranked workflow first, then only the tools it references.
 3. Follow linked `knowledge/<engine>/` (or `knowledge/shared/`) notes for deeper
    background (architecture, args, env vars, ROCm/CUDA specifics).
@@ -82,7 +82,9 @@ python3 scripts/yax.py recommend "serve a quantized model on 2 GPUs"
 python3 scripts/yax.py where "preemption throughput collapse" -V 0.8.5  # version-aware code map
 python3 scripts/yax.py where --list-areas                               # all code-map areas
 python3 scripts/yax.py where "radix cache reuse" --engine sglang        # SGLang code map
-python3 scripts/yax.py index          # rebuild registry (toolbox + per-engine code maps)
+python3 scripts/yax.py knowledge-search "radix attention" -e sglang  # direct knowledge search
+python3 scripts/yax.py sync-status --all  # sync refs for every engine
+python3 scripts/yax.py index          # rebuild registry (toolbox + knowledge + code maps)
 python3 scripts/yax.py validate       # check metadata + references
 python3 scripts/yax.py eval           # retrieval/routing quality gate
 python3 scripts/yax.py sync-status -e sglang  # which engine version YAX reflects + refresh
@@ -107,9 +109,10 @@ Then update the affected cards, bump `synced_to`, and add a CHANGELOG entry.
 
 ### Develop-By-Version Code Map
 
-YAX helps develop vLLM and SGLang. Because each tree moves between releases
-(vLLM's V0→V1 relocation; SGLang's pre/post-0.4 layout), `where` resolves the
-right paths **for your engine + version tag**:
+YAX helps develop vLLM, SGLang, and ATOM. Because each tree moves between
+releases (vLLM's V0→V1 relocation; SGLang's pre/post-0.4 layout; ATOM's young
+v0.1.x docs-first layout), `where` resolves the right paths **for your engine +
+version tag**:
 
 ```bash
 python3 scripts/yax.py where "scheduler decides which requests run" -V 0.7.3

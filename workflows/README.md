@@ -26,5 +26,7 @@ tool sequence, and validation gates. Retrieve via
 
 - Start from `templates/workflow-note.md`; reference only existing tool ids.
 - Put engine-specific workflows under `workflows/<engine>/`; tag with the engine.
+- Scaffold in the right namespace:
+  `python3 scripts/yax.py new-workflow <engine> <workflow-id>`.
 - Run `python3 scripts/yax.py index` and `python3 scripts/yax.py validate` after
   changes.

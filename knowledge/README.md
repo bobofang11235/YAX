@@ -4,8 +4,8 @@ Compact, reusable background for LLM inference-engine work. Cards explain
 principles, internals, and reference data that tools and workflows cite. Retrieve
 via `python3 scripts/yax.py recommend "<task>"` rather than scanning folders.
 
-Knowledge is namespaced by engine so vLLM and SGLang are equally first-class,
-with engine-agnostic notes kept separate.
+Knowledge is namespaced by engine so vLLM, SGLang, and ATOM are equally
+first-class, with engine-agnostic notes kept separate.
 
 ## Layout
 
@@ -34,3 +34,11 @@ with engine-agnostic notes kept separate.
 - Keep cards compact; link to upstream source paths instead of pasting long code.
 - Record the engine version/commit a claim was verified against when it is
   version-sensitive.
+
+## Search
+
+```bash
+python3 scripts/yax.py knowledge-search "paged attention"
+python3 scripts/yax.py knowledge-search "radix attention" --engine sglang
+python3 scripts/yax.py knowledge-search "two-batch overlap" --engine atom
+```

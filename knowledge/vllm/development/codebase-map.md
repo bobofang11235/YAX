@@ -75,8 +75,8 @@ layout whose range contains it. Example — the scheduler area:
 
 - Hardcoding `vllm/v1/...` advice for a user on 0.7.x (those paths do not exist
   there).
-- Letting the generated `codemap-by-version.json` drift; `validate` warns when it
-  is stale.
+- Letting the generated `registry/vllm-codemap-by-version.json` drift; `validate`
+  warns when it is stale.
 
 ## Related
 

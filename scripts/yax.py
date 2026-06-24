@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """YAX toolbox runtime.
 
-YAX is a retrieval-first vLLM engineering harness. Markdown remains the source
-of truth. This script builds a deterministic search index from tool, workflow,
-and run cards; recommends relevant artifacts for a task; scaffolds new
-artifacts; and validates references.
+YAX is a retrieval-first LLM inference-engine engineering harness. Markdown
+remains the source of truth. This script builds deterministic search indexes
+from tools, workflows, runs, knowledge notes, and version-tagged code maps;
+recommends relevant artifacts for a task; scaffolds new artifacts; and validates
+references.
 
 The design mirrors a compact agent harness: instructions route, knowledge
 explains, the registry makes search cheap, and runs/handoffs keep durable state.
@@ -21,9 +22,11 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT_DIRS = ("tools", "workflows", "runs")
 REGISTRY_PATH = ROOT / "registry" / "toolbox-index.json"
+KNOWLEDGE_INDEX_PATH = ROOT / "registry" / "knowledge-index.json"
 ABSTENTIONS_PATH = ROOT / "capture" / "abstentions.jsonl"
 BASELINE_PATH = ROOT / "evals" / "baseline.json"
 DEVMAP_DIR = ROOT / "devmap"
+KNOWLEDGE_DIR = ROOT / "knowledge"
 
 # YAX covers multiple inference engines symmetrically. Each engine has its own
 # `<engine>-*` code-map files under devmap/ and its own generated registry index.
@@ -247,6 +250,55 @@ def load_artifacts(root=ROOT):
     return artifacts
 
 
+def iter_knowledge_markdown(root=ROOT):
+    base = root / "knowledge"
+    if not base.exists():
+        return
+    for path in sorted(base.rglob("*.md")):
+        if path.name == "README.md":
+            continue
+        yield path
+
+
+def load_knowledge_note(path):
+    text = path.read_text(encoding="utf-8")
+    _meta, body = parse_frontmatter(text)
+    sections = parse_sections(body)
+    relpath = rel(path)
+    title = path.stem.replace("-", " ").title()
+    for line in body.splitlines():
+        if line.startswith("# "):
+            title = line[2:].strip()
+            break
+    parts = path.relative_to(KNOWLEDGE_DIR).parts
+    engine = parts[0] if parts else "unknown"
+    note_id = path.relative_to(KNOWLEDGE_DIR).with_suffix("").as_posix()
+    search_parts = [note_id, title, relpath, engine]
+    search_parts.extend(sections.values())
+    return {
+        "id": note_id,
+        "kind": "knowledge",
+        "ref": "knowledge:%s" % note_id,
+        "title": title,
+        "path": relpath,
+        "engine": engine,
+        "tags": [engine],
+        "aliases": [],
+        "capabilities": [],
+        "triggers": [],
+        "related": [],
+        "tools": [],
+        "tools_used": [],
+        "task": "",
+        "sections": sections,
+        "searchText": "\n".join(str(p) for p in search_parts if p),
+    }
+
+
+def load_knowledge_notes(root=ROOT):
+    return [load_knowledge_note(path) for path in iter_knowledge_markdown(root)]
+
+
 INDEX_SECTION_SYNOPSIS_CHARS = 240
 
 
@@ -277,12 +329,37 @@ def build_index(root=ROOT):
     }
 
 
+def build_knowledge_index(root=ROOT):
+    notes = [index_artifact(n) for n in load_knowledge_notes(root)]
+    by_engine = defaultdict(list)
+    for note in notes:
+        by_engine[note["engine"]].append(note)
+    for values in by_engine.values():
+        values.sort(key=lambda n: n["id"])
+    return {
+        "version": "1.0.0",
+        "source": "knowledge markdown",
+        "counts": {k: len(v) for k, v in sorted(by_engine.items())},
+        "notes": sorted(notes, key=lambda n: (n["engine"], n["id"])),
+    }
+
+
+def write_knowledge_index():
+    index = build_knowledge_index(ROOT)
+    KNOWLEDGE_INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
+    KNOWLEDGE_INDEX_PATH.write_text(
+        json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    counts = ", ".join("%s=%s" % (k, v) for k, v in index["counts"].items())
+    print("Wrote %s (%s)" % (rel(KNOWLEDGE_INDEX_PATH), counts))
+
+
 def write_index(args):
     index = build_index(ROOT)
     REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
     REGISTRY_PATH.write_text(json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print("Wrote %s" % rel(REGISTRY_PATH))
     print("Tools: {tool}, workflows: {workflow}, runs: {run}".format(**index["counts"]))
+    write_knowledge_index()
     if available_engines():
         write_codemap_index()
     return 0
@@ -358,6 +435,38 @@ def cmd_search(args):
         return 1
     for score, item in results:
         print_result(score, item)
+    return 0
+
+
+def cmd_knowledge_search(args):
+    notes = load_knowledge_notes(ROOT)
+    if args.engine:
+        notes = [n for n in notes if n.get("engine") == args.engine]
+    results = []
+    for note in notes:
+        score = artifact_score(args.query, note)
+        if score > 0:
+            results.append((score, note))
+    results.sort(key=lambda pair: (-pair[0], pair[1]["engine"], pair[1]["id"]))
+    results = results[:args.limit]
+    if not results:
+        print("No matching knowledge notes found.")
+        return 1
+    print("# YAX Knowledge Search")
+    print("")
+    print("Query: %s" % args.query)
+    if args.engine:
+        print("Engine: %s" % args.engine)
+    print("")
+    for score, note in results:
+        print("[%s] %s  score=%s" % (note["ref"], note["title"], score))
+        print("  path: %s" % note["path"])
+        use_when = note.get("sections", {}).get("Use When", "")
+        lesson = note.get("sections", {}).get("Lesson", "")
+        snippet = use_when or lesson
+        if snippet:
+            print("  use: %s" % " ".join(snippet.split())[:240])
+        print("")
     return 0
 
 
@@ -493,6 +602,18 @@ def validate_artifacts(root=ROOT):
     elif root == ROOT:
         warnings.append("registry/toolbox-index.json does not exist; run `python3 scripts/yax.py index`")
     if root == ROOT:
+        try:
+            current_knowledge = build_knowledge_index(root)
+            if not KNOWLEDGE_INDEX_PATH.exists():
+                warnings.append("registry/knowledge-index.json does not exist; run `python3 scripts/yax.py index`")
+            else:
+                stored_knowledge = json.loads(KNOWLEDGE_INDEX_PATH.read_text(encoding="utf-8"))
+                if (stored_knowledge.get("notes") != current_knowledge.get("notes")
+                        or stored_knowledge.get("counts") != current_knowledge.get("counts")):
+                    warnings.append("registry/knowledge-index.json is stale; run `python3 scripts/yax.py index`")
+        except Exception as exc:
+            warnings.append("could not compare knowledge index: %s" % exc)
+    if root == ROOT:
         for engine in available_engines():
             idx_path = engine_paths(engine)["codemap_index"]
             try:
@@ -527,7 +648,26 @@ def slugify(value):
     return value.strip("-") or "untitled"
 
 
-def scaffold(kind, artifact_id):
+def scaffold_dir(kind, engine=None):
+    if kind == "tool" and engine:
+        return ROOT / "tools" / engine / "custom"
+    if kind == "workflow" and engine:
+        return ROOT / "workflows" / engine
+    return ROOT / KIND_DIR[kind]
+
+
+def resolve_engine_scaffold_args(args):
+    first = getattr(args, "engine_or_id", None)
+    second = getattr(args, "id", None)
+    if second is None:
+        return None, first
+    if first not in ENGINES:
+        raise SystemExit("Unknown engine `%s`; expected one of: %s"
+                         % (first, ", ".join(ENGINES)))
+    return first, second
+
+
+def scaffold(kind, artifact_id, engine=None):
     artifact_id = slugify(artifact_id)
     template = ROOT / "templates" / TEMPLATE_FOR_KIND[kind]
     if not template.exists():
@@ -537,7 +677,7 @@ def scaffold(kind, artifact_id):
         out = ROOT / KIND_DIR[kind] / (today + "-" + artifact_id + ".md")
         run_id = today + "-" + artifact_id
     else:
-        out = ROOT / KIND_DIR[kind] / (artifact_id + ".md")
+        out = scaffold_dir(kind, engine) / (artifact_id + ".md")
         run_id = artifact_id
     if out.exists():
         raise SystemExit("Refusing to overwrite existing file %s" % rel(out))
@@ -556,11 +696,13 @@ def scaffold(kind, artifact_id):
 
 
 def cmd_new_tool(args):
-    return scaffold("tool", args.id)
+    engine, artifact_id = resolve_engine_scaffold_args(args)
+    return scaffold("tool", artifact_id, engine=engine)
 
 
 def cmd_new_workflow(args):
-    return scaffold("workflow", args.id)
+    engine, artifact_id = resolve_engine_scaffold_args(args)
+    return scaffold("workflow", artifact_id, engine=engine)
 
 
 def cmd_new_run(args):
@@ -1077,6 +1219,23 @@ def load_sync_state(engine="vllm"):
 
 def cmd_sync_status(args):
     """Show the upstream point YAX is synced to (per engine) and how to find newer commits."""
+    if getattr(args, "all", False):
+        engines = available_engines() or list(ENGINES)
+        for idx, engine in enumerate(engines):
+            if idx:
+                print("")
+            state = load_sync_state(engine)
+            if not state:
+                print("# YAX upstream sync status (%s)" % engine)
+                print("No sync state (%s missing)." % rel(engine_paths(engine)["sync"]))
+                continue
+            print("# YAX upstream sync status (%s)" % engine)
+            print("Repo:      %s" % (state.get("repo") or state.get("vllm_repo") or ""))
+            print("Synced to: %s  (release %s)" %
+                  (state.get("synced_to", "<unknown>"),
+                   state.get("synced_to_release_date", "?")))
+            print("Synced on: %s" % state.get("synced_on", "?"))
+        return 0
     engine = getattr(args, "engine", "vllm")
     state = load_sync_state(engine)
     if not state:
@@ -1127,7 +1286,7 @@ def cmd_sync_status(args):
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description="YAX vLLM engineering toolbox runtime")
+    parser = argparse.ArgumentParser(description="YAX LLM inference-engine toolbox runtime")
     sub = parser.add_subparsers(dest="command")
 
     p = sub.add_parser("index", help="build registry/toolbox-index.json + codemap index")
@@ -1151,6 +1310,7 @@ def build_parser():
                        help="show the engine version YAX is synced to + how to find newer commits")
     p.add_argument("--engine", "-e", choices=ENGINES, default="vllm",
                    help="which engine's sync state to show (default: vllm)")
+    p.add_argument("--all", action="store_true", help="show sync state for every engine")
     p.add_argument("--repo-path", "--vllm-path", dest="repo_path", default=None,
                    help="path to a local engine checkout; if given, runs the commit diff")
     p.set_defaults(func=cmd_sync_status)
@@ -1161,6 +1321,13 @@ def build_parser():
     p.add_argument("--kind", action="append", choices=("tool", "workflow", "run"))
     p.set_defaults(func=cmd_search)
 
+    p = sub.add_parser("knowledge-search", help="search knowledge notes directly")
+    p.add_argument("query")
+    p.add_argument("--engine", "-e", choices=ENGINES + ("shared",), default=None,
+                   help="limit to one knowledge namespace")
+    p.add_argument("--limit", type=int, default=10)
+    p.set_defaults(func=cmd_knowledge_search)
+
     p = sub.add_parser("recommend", help="recommend workflows and tools for a task")
     p.add_argument("query")
     p.add_argument("--min-score", type=int, default=MIN_SCORE,
@@ -1168,11 +1335,15 @@ def build_parser():
     p.set_defaults(func=cmd_recommend)
 
     p = sub.add_parser("new-tool", help="scaffold a new tool card")
-    p.add_argument("id")
+    p.add_argument("engine_or_id",
+                   help="tool id, or engine when paired with id (vllm/sglang/atom)")
+    p.add_argument("id", nargs="?", help="tool id when an engine is provided")
     p.set_defaults(func=cmd_new_tool)
 
     p = sub.add_parser("new-workflow", help="scaffold a new workflow card")
-    p.add_argument("id")
+    p.add_argument("engine_or_id",
+                   help="workflow id, or engine when paired with id (vllm/sglang/atom)")
+    p.add_argument("id", nargs="?", help="workflow id when an engine is provided")
     p.set_defaults(func=cmd_new_workflow)
 
     p = sub.add_parser("new-run", help="scaffold a new run record")

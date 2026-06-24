@@ -20,6 +20,8 @@ only for human organization.
 
 - Start from `templates/tool-note.md`.
 - Put engine-specific tools under `tools/<engine>/`; tag with the engine.
+- Scaffold in the right namespace:
+  `python3 scripts/yax.py new-tool <engine> <tool-id>`.
 - Keep each card compact; link to `knowledge/` instead of copying.
 - Run `python3 scripts/yax.py index` and `python3 scripts/yax.py validate` after
   changes.

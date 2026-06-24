@@ -23,4 +23,9 @@
 {"query": "serve a model with atom on amd rocm with aiter", "expect": "workflow:serve-atom-model", "max_rank": 1, "cluster": "atom"}
 {"query": "launch the atom openai server aiter optimized model", "expect": "tool:launch-atom-server", "max_rank": 2, "cluster": "atom"}
 {"query": "tune atom two-batch overlap mxfp4 tunableop throughput", "expect": "tool:tune-atom-config", "max_rank": 2, "cluster": "atom"}
+{"query": "mem-fraction-static radix cache tune sglang", "expect": "tool:tune-sglang-config", "max_rank": 1, "cluster": "cross-engine"}
+{"query": "online_quant_config mxfp4 atom", "expect": "tool:tune-atom-config", "max_rank": 2, "cluster": "cross-engine"}
+{"query": "RadixAttention fork cache reuse in SGLang", "expect": "workflow:serve-sglang-model", "max_rank": 2, "cluster": "cross-engine"}
+{"query": "PagedAttention block manager vllm", "expect": "workflow:contribute-feature", "max_rank": 1, "cluster": "cross-engine"}
+{"query": "Two-Batch Overlap MORI all-to-all ATOM", "expect": "workflow:serve-atom-model", "max_rank": 2, "cluster": "cross-engine"}
 {"query": "how do i bake sourdough bread at home", "expect_none": true, "cluster": "offdomain"}

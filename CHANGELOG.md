@@ -8,7 +8,7 @@ whole history.
 
 ## How To Update YAX From Upstream
 
-For `<engine>` in {`vllm`, `sglang`}:
+For `<engine>` in {`vllm`, `sglang`, `atom`}:
 
 1. Read the current marker:
    ```bash
@@ -42,6 +42,18 @@ Newest first.
 ## [Unreleased]
 
 - (pending changes go here)
+
+## 2026-06-24 — Improve multi-engine ergonomics
+
+- Added direct `knowledge-search` and a generated `registry/knowledge-index.json`
+  so agents can retrieve knowledge notes without routing through a tool/workflow.
+- Added engine-aware scaffolding: `new-tool <engine> <id>` creates
+  `tools/<engine>/custom/<id>.md`; `new-workflow <engine> <id>` creates
+  `workflows/<engine>/<id>.md`.
+- Added `sync-status --all` for a single view of all engine sync baselines.
+- Added cross-engine eval cases that distinguish vLLM, SGLang, and ATOM-specific
+  concepts (PagedAttention vs RadixAttention vs TBO/MXFP4/online quant).
+- Fixed stale two-engine wording in docs/runtime.
 
 ## 2026-06-23 — Add ATOM (ROCm/ATOM) as a third engine
 

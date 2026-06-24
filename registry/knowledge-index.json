@@ -1,0 +1,976 @@
+{
+  "counts": {
+    "atom": 9,
+    "sglang": 8,
+    "shared": 2,
+    "vllm": 18
+  },
+  "notes": [
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/aiter-model-ops",
+      "kind": "knowledge",
+      "path": "knowledge/atom/aiter-model-ops.md",
+      "ref": "knowledge:atom/aiter-model-ops",
+      "related": [],
+      "sections": {
+        "Avoid": "- Treating ATOM kernels as the source of a perf/accuracy bug before checking the underlying AITER kernel and the selected backend. - Bypassing the op wrappers (breaks quant/TP/graph integration).",
+        "Lesson": "ATOM = **AiTer Optimized Model**. Its reason to exist is wiring [AITER](https://github.com/ROCm/aiter) kernels into a clean serving engine. Model layers are thin wrappers that dispatch to AITER implementations. ### AITER Backends AITER prov...",
+        "Related": "- `knowledge/atom/quantization.md` - `knowledge/atom/performance-tuning.md` - `knowledge/vllm/rocm/rocm-setup-and-tuning.md` (AITER background, shared)",
+        "Rules": "- For an op change, start in `atom/layers/` and `docs/model_ops_guide.md`; the actual kernel lives in AITER, not ATOM. - When a layer is slow or wrong, identify which AITER backend (ASM/CK/Triton) is selected for the shape; a fallback or wr...",
+        "Source": "- `docs/model_ops_guide.md`, `atom/layers/` - AITER: https://github.com/ROCm/aiter",
+        "Use When": "Use when changing how ATOM computes a layer, integrating or debugging an AITER kernel, or reasoning about ATOM's performance. This is ATOM's core differentiator. Authoritative: `docs/model_ops_guide.md`."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOM Model Ops And AITER Kernels",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/architecture",
+      "kind": "knowledge",
+      "path": "knowledge/atom/architecture.md",
+      "ref": "knowledge:atom/architecture",
+      "related": [],
+      "sections": {
+        "Avoid": "- Assuming vLLM internals map 1:1; ATOM is nano-vllm-derived and much smaller. - Treating module paths here as fixed \u2014 verify against the checkout.",
+        "Lesson": "ATOM (\"AiTer Optimized Model\") is an AMD-ROCm inference engine whose value is tight integration with **AITER** kernels (ASM/CK/Triton). It keeps the familiar serving-engine shape but stays small. ### Component Map (best-effort; see docs/arc...",
+        "Related": "- `knowledge/atom/aiter-model-ops.md` - `knowledge/atom/distributed-tbo.md` - `knowledge/atom/vllm-vs-atom.md` - `devmap/atom-areas.jsonl`",
+        "Rules": "- Read `docs/architecture_guide.md` first \u2014 it is authoritative and ATOM's internals move fast. - Scheduling/KV changes \u2192 `atom/engine/` + `docs/scheduling_kv_cache_guide.md`. - Kernel/op changes \u2192 `atom/layers/` + `docs/model_ops_guide.md`...",
+        "Source": "- `docs/architecture_guide.md`, `atom/` in the repo - https://github.com/ROCm/ATOM",
+        "Use When": "Use to understand how ATOM is structured, where to change behavior, and how a request flows from API to GPU. ATOM is a lightweight, vLLM-like engine adapted from nano-vllm, so it is smaller and simpler than vLLM/SGLang."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOM Architecture",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/configuration",
+      "kind": "knowledge",
+      "path": "knowledge/atom/configuration.md",
+      "ref": "knowledge:atom/configuration",
+      "related": [],
+      "sections": {
+        "Avoid": "- Copying vLLM flags verbatim; translate intent and confirm with `--help`.",
+        "Lesson": "ATOM is configured via config classes + CLI flags. Names below are from the README/recipes; verify against the installed version (ATOM is young and moving). ### Launch ```bash # offline python -m atom.examples.simple_inference --model meta-...",
+        "Related": "- `knowledge/atom/environment-variables.md` - `knowledge/atom/quantization.md` - `knowledge/atom/performance-tuning.md`",
+        "Rules": "- Note ATOM's mixed flag styles (`--kv_cache_dtype` underscore vs `-tp`); copy from a recipe and verify with `--help`. - First run compiles the model (can take ~10 min); expect a slow cold start. - Don't assume vLLM/SGLang flag names; ATOM...",
+        "Source": "- `docs/configuration_guide.md`; ATOM README/recipes - https://github.com/ROCm/ATOM",
+        "Use When": "Use when launching `atom.entrypoints.openai_server` / `atom.examples.simple_inference` or setting config. Authoritative: `docs/configuration_guide.md`; confirm with `python -m atom.entrypoints.openai_server --help`."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOM Configuration (Args)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/distributed-tbo",
+      "kind": "knowledge",
+      "path": "knowledge/atom/distributed-tbo.md",
+      "ref": "knowledge:atom/distributed-tbo",
+      "related": [],
+      "sections": {
+        "Avoid": "- Enabling P/D disaggregation without the RDMA fabric/transport configured. - Comparing MoE throughput without noting TBO and EP settings.",
+        "Lesson": "### Parallelism - **TP** (`-tp N`): shard layers across GPUs. - **DP**: replicas; pairs with EP for MoE. - **EP**: shard MoE experts, using **MORI all-to-all** for expert routing comms. ### Two-Batch Overlap (TBO) Following DeepSeek's syste...",
+        "Related": "- `knowledge/atom/performance-tuning.md` - `knowledge/atom/features-overview.md` - `knowledge/atom/recipes` (see `devmap` area `recipes`)",
+        "Rules": "- For MoE at scale, combine EP + DP attention + TBO; measure comms overlap (TBO should hide most all-to-all latency). - Use P/D disaggregation when prefill and decode have very different resource profiles or you need independent scaling; ot...",
+        "Source": "- `docs/distributed_guide.md`; ATOM README (TBO, PD recipes) - https://github.com/ROCm/ATOM",
+        "Use When": "Use when scaling ATOM across GPUs/nodes, tuning MoE expert parallelism, or configuring prefill/decode disaggregation. Authoritative: `docs/distributed_guide.md`."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOM Distributed, TBO, And P/D Disaggregation",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/environment-variables",
+      "kind": "knowledge",
+      "path": "knowledge/atom/environment-variables.md",
+      "ref": "knowledge:atom/environment-variables",
+      "related": [],
+      "sections": {
+        "Avoid": "- Assuming `VLLM_*` or `SGLANG_*` vars work in ATOM; the namespace is `ATOM_*`. - Using CUDA device-selection vars on ROCm.",
+        "Lesson": "ATOM exposes `ATOM_*` environment variables (documented in `docs/environment_variables.md`). Because ATOM is young and the set changes, treat that doc (or `grep ATOM_ atom/`) as the source of truth rather than memorizing names here. ### ATO...",
+        "Related": "- `knowledge/atom/configuration.md` - `knowledge/atom/performance-tuning.md` - `knowledge/vllm/rocm/rocm-setup-and-tuning.md` (shared ROCm background)",
+        "Rules": "- Read `docs/environment_variables.md` for exact `ATOM_*` names; this note intentionally avoids guessing them. - Record every non-default env var with benchmarks/bug reports \u2014 they change kernels and numerics. - ROCm/AITER env (TunableOp, R...",
+        "Source": "- `docs/environment_variables.md` - https://github.com/ROCm/ATOM",
+        "Use When": "Use to change ATOM behavior without code edits, and for ROCm/AITER runtime tuning. Authoritative list: `docs/environment_variables.md` (all `ATOM_*`)."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOM Environment Variables",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/features-overview",
+      "kind": "knowledge",
+      "path": "knowledge/atom/features-overview.md",
+      "ref": "knowledge:atom/features-overview",
+      "related": [],
+      "sections": {
+        "Avoid": "- Expecting NVIDIA/CUDA support \u2014 ATOM targets ROCm.",
+        "Lesson": "### Core - **ROCm-optimized, AITER kernels** (ASM / CK / Triton) \u2014 the central design. - **OpenAI-compatible API** (`/v1/chat/completions`, `/v1/completions`) + profiler endpoints (`/start_profile`, `/stop_profile`). - **Piecewise torch.com...",
+        "Related": "- `knowledge/atom/quantization.md` - `knowledge/atom/distributed-tbo.md` - `knowledge/atom/aiter-model-ops.md`",
+        "Rules": "- Confirm a model in `atom/models/` (or `docs/model_support_guide.md`) before debugging \"unsupported architecture\". - Feature set moves fast and is ROCm-only; check the README \"News\" and `docs/`.",
+        "Source": "- ATOM README + `docs/`; https://github.com/ROCm/ATOM",
+        "Use When": "Use to check whether ATOM supports something today and the flag/guide for it."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOM Feature Overview",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/performance-tuning",
+      "kind": "knowledge",
+      "path": "knowledge/atom/performance-tuning.md",
+      "ref": "knowledge:atom/performance-tuning",
+      "related": [],
+      "sections": {
+        "Avoid": "- Lowering the compile/opt level in production (loses CUDA-graph decode speedup). - Benchmarking the first run (model compilation can take ~10 min \u2014 warm up first).",
+        "Lesson": "Same physics as any engine (decode is bandwidth-bound, prefill compute-bound; see `knowledge/shared/performance-estimation.md`), with ATOM/AMD specifics. Tune one thing at a time and re-benchmark. ### Measure First ```bash python -m atom.be...",
+        "Related": "- `knowledge/atom/aiter-model-ops.md` - `knowledge/atom/distributed-tbo.md` - `knowledge/shared/performance-estimation.md` - `knowledge/shared/performance-factors.md`",
+        "Rules": "- Change one knob per run; record GPU arch (gfx), ROCm + AITER + ATOM versions, quant format, TBO/EP layout, and opt level. - Fix correctness (lm-eval) before tuning. - Use the trace tools \u2014 ATOM ships per-kernel/per-layer analysis; use it.",
+        "Source": "- ATOM README (benchmarking/profiling), `docs/serving_benchmarking_guide.md` - https://rocm.github.io/ATOM/benchmark-dashboard",
+        "Use When": "Use when ATOM throughput is low or latency high, on AMD GPUs. Measure with `atom.benchmarks.benchmark_serving` and the trace tools."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOM Performance Tuning",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/quantization",
+      "kind": "knowledge",
+      "path": "knowledge/atom/quantization.md",
+      "ref": "knowledge:atom/quantization",
+      "related": [],
+      "sections": {
+        "Avoid": "- Stacking aggressive weight quant (MXFP4/INT4) + FP8 KV without an accuracy check. - Assuming ATOM FP8 numerics match CUDA FP8 (format differs on ROCm).",
+        "Lesson": "ATOM auto-detects quantization from the HuggingFace config and dispatches to AITER quantized GEMMs. Formats: - **FP8** \u2014 incl. FP8-block source checkpoints; **PTPC-FP8** (per-token per-channel) as an online target. - **MXFP4** \u2014 microscalin...",
+        "Related": "- `knowledge/atom/aiter-model-ops.md` - `knowledge/atom/configuration.md` - `knowledge/vllm/rocm/rocm-fp8-formats.md` (fnuz vs OCP, shared)",
+        "Rules": "- Prefer a pre-quantized checkpoint when available; ATOM auto-detects it. - Use `--online_quant_config` to experiment without re-packing, then validate accuracy (lm-eval gsm8k or similar) per precision. - MXFP4 is attractive for large MoE o...",
+        "Source": "- ATOM README (online quantization), `docs/configuration_guide.md` - https://github.com/ROCm/ATOM",
+        "Use When": "Use when fitting a model, raising throughput, or serving a quantized checkpoint on ATOM. ATOM supports more aggressive AMD-oriented formats than the typical FP8/INT set, plus on-the-fly re-quantization."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "ATOM Quantization",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "atom",
+      "id": "atom/vllm-vs-atom",
+      "kind": "knowledge",
+      "path": "knowledge/atom/vllm-vs-atom.md",
+      "ref": "knowledge:atom/vllm-vs-atom",
+      "related": [],
+      "sections": {
+        "Avoid": "- Considering ATOM for NVIDIA-only deployments. - Assuming `VLLM_*` env vars or vLLM internals apply to ATOM.",
+        "Lesson": "ATOM is a **lightweight, AMD-ROCm-first** engine built on **AITER**, adapted from nano-vllm. It is much smaller than vLLM/SGLang and intentionally AMD-focused. ### Key Differences - **Hardware**: ATOM is **ROCm-only** (AMD). vLLM and SGLang...",
+        "Related": "- `knowledge/atom/architecture.md` - `knowledge/sglang/vllm-vs-sglang.md` - `knowledge/shared/performance-estimation.md`",
+        "Rules": "- Never copy flags across engines; translate intent and confirm with each engine's `--help`. - For ATOM, the `docs/` guides are authoritative; internal module paths move.",
+        "Source": "- ATOM README (vLLM plugin backend, nano-vllm acknowledgement) - https://github.com/ROCm/ATOM",
+        "Use When": "Use when deciding among engines, or mapping a concept you know in vLLM to ATOM."
+      },
+      "tags": [
+        "atom"
+      ],
+      "task": "",
+      "title": "vLLM vs ATOM (and SGLang)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "sglang",
+      "id": "sglang/architecture",
+      "kind": "knowledge",
+      "path": "knowledge/sglang/architecture.md",
+      "ref": "knowledge:sglang/architecture",
+      "related": [],
+      "sections": {
+        "Avoid": "- Confusing the frontend DSL (`sglang/lang`) with the runtime (`sglang/srt`) \u2014 most serving/engine work is in `srt`. - Assuming a single-process design; debugging often means following ZMQ messages across processes.",
+        "Lesson": "SGLang has two halves: - **SRT (SGLang Runtime)** \u2014 `python/sglang/srt/`: the serving backend (scheduler, KV cache, model execution, attention, the HTTP/OpenAI server). - **Frontend language** \u2014 `python/sglang/lang/` + `python/sglang/api.py...",
+        "Related": "- `knowledge/sglang/radixattention.md` - `knowledge/sglang/server-args.md` - `knowledge/sglang/vllm-vs-sglang.md` - `devmap/sglang-areas.jsonl`",
+        "Rules": "- Scheduling/batching changes \u2192 `srt/managers/scheduler.py` + `schedule_*.py`. - KV/prefix-reuse changes \u2192 `srt/mem_cache/` (see `radixattention.md`). - Model math \u2192 `srt/models/<arch>.py`; attention kernels \u2192 `srt/layers/attention/`. - Ser...",
+        "Source": "- `python/sglang/srt/` (managers, mem_cache, model_executor, entrypoints) - https://docs.sglang.ai/ ; v0.4 blog (zero-overhead scheduler)",
+        "Use When": "Use to understand how SGLang is structured, where to add or change behavior, and how a request flows from API to GPU."
+      },
+      "tags": [
+        "sglang"
+      ],
+      "task": "",
+      "title": "SGLang Architecture",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "sglang",
+      "id": "sglang/environment-variables",
+      "kind": "knowledge",
+      "path": "knowledge/sglang/environment-variables.md",
+      "ref": "knowledge:sglang/environment-variables",
+      "related": [],
+      "sections": {
+        "Avoid": "- Assuming a vLLM `VLLM_*` var exists in SGLang; the namespaces differ (`SGLANG_*` / `SGL_*`). - Leaving profiler/debug vars on in production.",
+        "Lesson": "SGLang reads `SGLANG_*` and `SGL_*` variables at startup. Many gate kernels or JIT paths. Set them before launching. Verify exact names by grepping `SGLANG_`/`SGL_` in the installed source (or reading `srt/environ.py`), as the set changes b...",
+        "Related": "- `knowledge/sglang/server-args.md` - `knowledge/sglang/performance-tuning.md` - `knowledge/vllm/serving/environment-variables.md` (vLLM comparison)",
+        "Rules": "- Set env vars before `sglang.launch_server`; many are read once at startup. - Record every non-default env var with any benchmark/bug report \u2014 they change kernels and numerics silently. - Prefer a server arg when one exists; reach for env...",
+        "Source": "- `python/sglang/srt/environ.py`, `python/sglang/srt/utils.py` - https://docs.sglang.ai/",
+        "Use When": "Use to change SGLang behavior without code edits: kernel/JIT toggles, profiling, distributed, and CUDA/ROCm acceleration. Newer releases centralize env handling in `python/sglang/srt/environ.py`; older ones read `os.environ` ad hoc."
+      },
+      "tags": [
+        "sglang"
+      ],
+      "task": "",
+      "title": "SGLang Environment Variables",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "sglang",
+      "id": "sglang/features-overview",
+      "kind": "knowledge",
+      "path": "knowledge/sglang/features-overview.md",
+      "ref": "knowledge:sglang/features-overview",
+      "related": [],
+      "sections": {
+        "Avoid": "- Assuming feature flags match vLLM names; see `vllm-vs-sglang.md`.",
+        "Lesson": "### Core Throughput / Memory - **RadixAttention** \u2014 automatic tree-based KV reuse (default; `--disable-radix-cache` to turn off). See `radixattention.md`. - **Zero-overhead / overlap scheduler** \u2014 CPU scheduling overlaps GPU compute (`--dis...",
+        "Related": "- `knowledge/sglang/server-args.md` - `knowledge/sglang/frontend-language.md` - `knowledge/sglang/vllm-vs-sglang.md`",
+        "Rules": "- Confirm a model is supported in `python/sglang/srt/models/` (or docs) before debugging \"unsupported architecture\". - Feature availability is version-dependent; check the release notes for the installed version.",
+        "Source": "- `python/sglang/srt/models/`, release notes - https://docs.sglang.ai/",
+        "Use When": "Use to check whether SGLang supports something today and the flag to enable it."
+      },
+      "tags": [
+        "sglang"
+      ],
+      "task": "",
+      "title": "SGLang Feature Overview",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "sglang",
+      "id": "sglang/frontend-language",
+      "kind": "knowledge",
+      "path": "knowledge/sglang/frontend-language.md",
+      "ref": "knowledge:sglang/frontend-language",
+      "related": [],
+      "sections": {
+        "Avoid": "- Confusing the frontend (`python/sglang/lang`) with the serving runtime (`python/sglang/srt`) \u2014 engine/serving work is in `srt`.",
+        "Lesson": "SGLang ships a **frontend language**: a Python DSL for expressing LLM \"programs\" with control flow, parallelism, and structured generation, executed against the SGLang runtime (or other backends). It is what makes SGLang more than a server...",
+        "Related": "- `knowledge/sglang/radixattention.md` - `knowledge/sglang/architecture.md` - `knowledge/sglang/vllm-vs-sglang.md`",
+        "Rules": "- Use the DSL when you have multi-step / branching / structured generation; use the plain OpenAI API for simple single completions. - Point the DSL at a `RuntimeEndpoint` to get RadixAttention reuse across calls. - Keep heavy logic on the s...",
+        "Source": "- `python/sglang/api.py`, `python/sglang/lang/` - https://docs.sglang.ai/frontend/frontend.html",
+        "Use When": "Use when programming multi-call LLM workflows with SGLang's Python DSL, or when deciding whether to use the frontend vs the plain OpenAI API."
+      },
+      "tags": [
+        "sglang"
+      ],
+      "task": "",
+      "title": "SGLang Frontend Language (DSL)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "sglang",
+      "id": "sglang/performance-tuning",
+      "kind": "knowledge",
+      "path": "knowledge/sglang/performance-tuning.md",
+      "ref": "knowledge:sglang/performance-tuning",
+      "related": [],
+      "sections": {
+        "Avoid": "- Disabling overlap scheduler / CUDA graph / radix cache to \"simplify\"; each is a default performance win. - `--mem-fraction-static` so high it OOMs mid-run.",
+        "Lesson": "Same physics as any engine (decode is bandwidth-bound, prefill compute-bound; see the vLLM `performance-estimation.md`), but the knob names and a few defaults differ. Tune one thing at a time and re-benchmark. ### Measure First - `python -m...",
+        "Related": "- `knowledge/sglang/radixattention.md` - `knowledge/sglang/server-args.md` - `knowledge/shared/performance-estimation.md` (engine-agnostic roofline) - `knowledge/shared/performance-factors.md`",
+        "Rules": "- Change one knob per run; record GPU arch, SGLang version, backend, flags, and cache hit rate. - Fix correctness before performance. - For prefix-heavy workloads, RadixAttention + `lpm` is usually the biggest win.",
+        "Source": "- `python/sglang/bench_serving.py` - https://docs.sglang.ai/",
+        "Use When": "Use when SGLang throughput is low, latency high, or you hit OOM, and you want a principled order of knobs. Measure with `python -m sglang.bench_serving`."
+      },
+      "tags": [
+        "sglang"
+      ],
+      "task": "",
+      "title": "SGLang Performance Tuning",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "sglang",
+      "id": "sglang/radixattention",
+      "kind": "knowledge",
+      "path": "knowledge/sglang/radixattention.md",
+      "ref": "knowledge:sglang/radixattention",
+      "related": [],
+      "sections": {
+        "Avoid": "- Treating RadixAttention as identical to vLLM APC; the tree enables sharing that block-hash caching does not (fork, branching). - Benchmarking prefix-heavy traffic without reporting the cache hit rate.",
+        "Lesson": "**RadixAttention** is SGLang's signature feature: automatic KV-cache **reuse** across requests via a **radix tree** of token sequences. Instead of hashing fixed blocks (vLLM's automatic prefix caching), SGLang keeps a tree whose paths are t...",
+        "Related": "- `knowledge/sglang/architecture.md` - `knowledge/sglang/performance-tuning.md` - `knowledge/sglang/vllm-vs-sglang.md` - `knowledge/vllm/architecture/paged-attention-kv-cache.md` (vLLM comparison)",
+        "Rules": "- Workloads with shared prefixes (system prompts, RAG with common context, agents, parallel sampling) benefit most \u2014 keep RadixAttention on. - If memory is tight, lower `--mem-fraction-static` or context length before disabling the cache. -...",
+        "Source": "- `python/sglang/srt/mem_cache/radix_cache.py`, `memory_pool.py` - RadixAttention paper: https://arxiv.org/abs/2312.07104 - https://docs.sglang.ai/",
+        "Use When": "Use when reasoning about KV reuse, prefix caching, multi-turn/agent/fork workloads, or the `--disable-radix-cache` / memory knobs in SGLang."
+      },
+      "tags": [
+        "sglang"
+      ],
+      "task": "",
+      "title": "RadixAttention",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "sglang",
+      "id": "sglang/server-args",
+      "kind": "knowledge",
+      "path": "knowledge/sglang/server-args.md",
+      "ref": "knowledge:sglang/server-args",
+      "related": [],
+      "sections": {
+        "Avoid": "- Copying flag sets across versions without `--help`. - Disabling the overlap scheduler / CUDA graph / radix cache in production without a measured reason (each is a default perf win).",
+        "Lesson": "Flags below are grouped by intent; defaults drift across versions. ### Model / Tokenizer - `--model-path` (HF repo or local), `--tokenizer-path`, `--served-model-name`. - `--dtype auto|bfloat16|float16`, `--context-length N` (max context; ~...",
+        "Related": "- `knowledge/sglang/environment-variables.md` - `knowledge/sglang/performance-tuning.md` - `knowledge/sglang/vllm-vs-sglang.md`",
+        "Rules": "- Start minimal: `python -m sglang.launch_server --model-path <m> --tp-size <n>`; add flags only to fix a measured problem. - Map from vLLM intent: gpu-mem-util \u2192 `--mem-fraction-static`, max-num-seqs \u2192 `--max-running-requests`, max-num-bat...",
+        "Source": "- `python/sglang/srt/server_args.py` - https://docs.sglang.ai/backend/server_arguments.html",
+        "Use When": "Use when launching `python -m sglang.launch_server` or constructing `Engine` / `ServerArgs`, or to find the flag that controls memory, parallelism, batching, or a feature. Canonical list: `python/sglang/srt/server_args.py`; verify with `pyt..."
+      },
+      "tags": [
+        "sglang"
+      ],
+      "task": "",
+      "title": "SGLang Server Arguments",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "sglang",
+      "id": "sglang/vllm-vs-sglang",
+      "kind": "knowledge",
+      "path": "knowledge/sglang/vllm-vs-sglang.md",
+      "ref": "knowledge:sglang/vllm-vs-sglang",
+      "related": [],
+      "sections": {
+        "Avoid": "- Assuming `VLLM_*` env vars or vLLM flag names work in SGLang (and vice versa). - Comparing the two without matching workload, precision, backend, and hardware.",
+        "Lesson": "Both are high-throughput LLM serving engines built on the same physics (PagedAttention-style KV, continuous batching, CUDA graphs, FP8, EAGLE spec decode, TP/PP/EP, OpenAI API). They differ in heritage and a few signature features. ### Conc...",
+        "Related": "- `knowledge/sglang/server-args.md` - `knowledge/sglang/radixattention.md` - `knowledge/vllm/serving/engine-args-reference.md` (vLLM) - `knowledge/shared/performance-estimation.md` (engine-agnostic)",
+        "Rules": "- Do not copy flags verbatim between engines; translate via the table and confirm with each engine's `--help`. - When porting tuning, keep the *intent* (grow KV pool, raise concurrency, protect decode latency); the knob names change. - Benc...",
+        "Source": "- vLLM and SGLang docs/source; release blogs - https://docs.sglang.ai/ , https://docs.vllm.ai/",
+        "Use When": "Use when choosing between the engines, porting a config/knowledge from one to the other, or mapping a concept you know in vLLM to its SGLang equivalent (or vice versa)."
+      },
+      "tags": [
+        "sglang"
+      ],
+      "task": "",
+      "title": "vLLM vs SGLang",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "shared",
+      "id": "shared/performance-estimation",
+      "kind": "knowledge",
+      "path": "knowledge/shared/performance-estimation.md",
+      "ref": "knowledge:shared/performance-estimation",
+      "related": [],
+      "sections": {
+        "Avoid": "- Using the FLOPS number to predict decode speed (it is bandwidth-bound). - Trusting the estimate for MoE without adjusting params (use active+stored separately) or for models with unusual attention (MLA, sliding window). - Forgetting activ...",
+        "Example (worked by `scripts/perfcalc.py`)": "Llama-3-8B (hidden 4096, 32 layers, 32 heads, 8 KV heads, inter 14336) on 1\u00d7H100 (80 GB, 3.35 TB/s, 989 TFLOPS), bf16, ctx 2048: - Weights ~14 GB; KV **128 KB/token**; KV pool ~56 GB \u2192 **~459k tokens ~= 224 seqs**. - Decode: batch 1 ~219 to...",
+        "Lesson": "Most first-order performance numbers fall out of the config. These are back-of-the-envelope: right order of magnitude and regime, not exact. Real numbers are lower (comms, kernel overhead, fragmentation, imperfect overlap); always confirm w...",
+        "Related": "- `knowledge/shared/performance-factors.md` - `knowledge/vllm/serving/performance-tuning.md` - `knowledge/vllm/architecture/scheduler-model-size-impact.md` - `knowledge/vllm/architecture/paged-attention-kv-cache.md` - `scripts/perfcalc.py`",
+        "Rules": "- Use these to size GPUs, pick TP, set `--max-model-len`, and sanity-check a benchmark (if measured throughput is far below estimate, look for a misconfiguration \u2014 eager mode, wrong backend, comms bound). - Decode is memory-bound: estimate...",
+        "Source": "- `scripts/perfcalc.py` - PagedAttention paper; vLLM `benchmarks/` - Transformer FLOPs/memory roofline analysis (standard back-of-envelope)",
+        "Use When": "Use to predict, before running anything, the order of magnitude of memory, concurrency, decode throughput, and TTFT from a model's config plus a few hardware numbers \u2014 and to know which regime (memory- vs compute-bound) you are in. Pair wit..."
+      },
+      "tags": [
+        "shared"
+      ],
+      "task": "",
+      "title": "Performance Estimation From Model Config",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "shared",
+      "id": "shared/performance-factors",
+      "kind": "knowledge",
+      "path": "knowledge/shared/performance-factors.md",
+      "ref": "knowledge:shared/performance-factors",
+      "related": [],
+      "sections": {
+        "Avoid": "- `--enforce-eager` in production; debug env vars left on; `gpu-memory-utilization` near 1.0. - Over-sharding (TP) a model that fits on fewer GPUs, especially without NVLink. - Benchmarking including cold-start/warmup, or across mismatched...",
+        "Lesson": "Performance = how well the GPU stays busy with useful FLOPs vs stalling on memory, communication, host overhead, or waiting. The levers below are roughly ordered by how often they dominate. Always measure with `vllm bench serve`. ### 1. Mod...",
+        "Related": "- `knowledge/vllm/serving/performance-tuning.md` - `knowledge/vllm/architecture/scheduler-model-size-impact.md` - `knowledge/vllm/architecture/paged-attention-kv-cache.md` - `knowledge/vllm/serving/quantization.md` - `knowledge/vllm/rocm/ro...",
+        "Rules": "- Identify the bottleneck class first (memory / compute / comms / host / cold start) before turning knobs; the right lever depends on which one binds. - Measure one change at a time with a realistic workload; record arch + versions + backen...",
+        "Source": "- `benchmarks/`, `vllm bench serve` - https://docs.vllm.ai/en/latest/performance/optimization.html",
+        "Use When": "Use to enumerate every major lever that affects vLLM performance, to find candidate causes of a slowdown, or to know what to sweep in a tuning study. `performance-tuning.md` gives the *order* to tune; this note is the *catalog*."
+      },
+      "tags": [
+        "shared"
+      ],
+      "task": "",
+      "title": "Performance Factors (What Moves vLLM Throughput/Latency)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/architecture/attention-backends",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/architecture/attention-backends.md",
+      "ref": "knowledge:vllm/architecture/attention-backends",
+      "related": [],
+      "sections": {
+        "Avoid": "- Comparing throughput across machines without fixing the backend. - Assuming the same backend name exists on both CUDA and ROCm \u2014 the sets differ.",
+        "Lesson": "Attention is pluggable. vLLM picks a backend automatically based on platform, GPU, dtype, head size, and features (sliding window, MLA, etc.), but you can override it with the `VLLM_ATTENTION_BACKEND` environment variable. Backends implemen...",
+        "Related": "- `knowledge/vllm/serving/environment-variables.md` - `knowledge/vllm/rocm/rocm-setup-and-tuning.md` - `knowledge/vllm/cuda/cuda-setup-and-tuning.md`",
+        "Rules": "- Let auto-selection win unless you have a measured reason to override. - If you hit an unsupported head size / feature, try `XFORMERS` (CUDA) or the Triton backend before assuming a bug. - FP8 KV cache often pairs best with `FLASHINFER` on...",
+        "Source": "- `vllm/attention/`, `vllm/v1/attention/backends/`, `vllm/attention/selector.py` - https://docs.vllm.ai/en/latest/",
+        "Use When": "Use when choosing or debugging an attention backend, setting `VLLM_ATTENTION_BACKEND`, hitting \"backend does not support ...\" errors, or porting attention behavior across CUDA and ROCm."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Attention Backends",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/architecture/paged-attention-kv-cache",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/architecture/paged-attention-kv-cache.md",
+      "ref": "knowledge:vllm/architecture/paged-attention-kv-cache",
+      "related": [],
+      "sections": {
+        "Avoid": "- Setting `--gpu-memory-utilization` near 1.0: leaves no headroom for activation spikes / fragmentation and causes mid-run OOM. - Assuming FP8 KV cache is free: it can cost a little accuracy; validate.",
+        "Lesson": "The KV cache stores per-token key/value tensors so past tokens are not recomputed each step. vLLM stores it in **fixed-size blocks** (default 16 tokens per block; some backends use other sizes) instead of one contiguous buffer per sequence....",
+        "Related": "- `knowledge/vllm/architecture/scheduler-batching.md` - `knowledge/vllm/serving/performance-tuning.md` - `knowledge/vllm/serving/engine-args-reference.md`",
+        "Rules": "- OOM at load: lower `--gpu-memory-utilization`, lower `--max-model-len`, reduce `--max-num-seqs` / `--max-num-batched-tokens`, or use more GPUs / quantization. - \"Engine cannot fit max_model_len\": KV pool is too small for the context; same...",
+        "Source": "- `vllm/v1/core/kv_cache_manager.py`, `vllm/v1/core/block_pool.py` - PagedAttention paper: https://arxiv.org/abs/2309.06180 - https://docs.vllm.ai/en/latest/design/kernel/paged_attention.html",
+        "Use When": "Use when reasoning about GPU memory, `--gpu-memory-utilization`, `--max-model-len`, `--block-size`, prefix caching, or out-of-memory (OOM) and \"not enough KV cache\" errors."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "PagedAttention And KV Cache",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/architecture/scheduler-batching",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/architecture/scheduler-batching.md",
+      "ref": "knowledge:vllm/architecture/scheduler-batching",
+      "related": [],
+      "sections": {
+        "Avoid": "- Treating `--max-num-seqs` as the throughput knob; batched-tokens usually dominates GPU-bound throughput. - Setting batched-tokens so high that decode P99 latency becomes unacceptable.",
+        "Lesson": "vLLM does **continuous (iteration-level) batching**: every decode step the scheduler re-decides which requests to run, instead of waiting for a whole batch to finish. This keeps the GPU full as requests of different lengths start and finish...",
+        "Related": "- `knowledge/vllm/architecture/paged-attention-kv-cache.md` - `knowledge/vllm/serving/performance-tuning.md` - `knowledge/vllm/serving/engine-args-reference.md`",
+        "Rules": "- Throughput-first (batch/offline): raise `--max-num-batched-tokens` and `--max-num-seqs` until GPU memory or latency limits hit. - Latency-first (interactive): keep `--max-num-batched-tokens` moderate so prefill chunks do not delay decodes...",
+        "Source": "- `vllm/v1/core/sched/scheduler.py` - https://docs.vllm.ai/en/latest/design/",
+        "Use When": "Use when tuning throughput vs latency, reasoning about `--max-num-seqs`, `--max-num-batched-tokens`, chunked prefill, preemption, or request priority."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Scheduler And Continuous Batching",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/architecture/scheduler-model-size-impact",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/architecture/scheduler-model-size-impact.md",
+      "ref": "knowledge:vllm/architecture/scheduler-model-size-impact",
+      "related": [],
+      "sections": {
+        "Avoid": "- Raising `--max-num-seqs` on a large model to \"get throughput\" when memory is the limit \u2014 it just causes preemption. - Using one large `--max-num-batched-tokens` across all sizes; it spikes decode latency on big models. - Blaming the sched...",
+        "Does Scheduling Change The Output?": "Semantically, no: vLLM aims for **batch-invariant** results \u2014 a request's tokens should not depend on who it was batched with. Caveats an engineer should know: - **Numerical non-determinism.** Different batch shapes can change reduction ord...",
+        "Lesson": "The scheduler does **not** change the model's math. It changes the **batch composition each step**: how many sequences run, and how the per-step token budget is split between prefill (prompt) and decode (one token/seq). That batch compositi...",
+        "Related": "- `knowledge/vllm/architecture/scheduler-batching.md` - `knowledge/vllm/architecture/paged-attention-kv-cache.md` - `knowledge/vllm/serving/performance-tuning.md` - `tools/vllm/debugging/oom-kv-triage.md`",
+        "Rules": "- Diagnose the binding constraint first: small \u2192 raise concurrency; large \u2192 grow KV pool (FP8 KV, quantize, lower max-model-len) before touching `--max-num-seqs`. - Scale `--max-num-batched-tokens` *down* as the model grows to protect decod...",
+        "Source": "- `vllm/v1/core/sched/scheduler.py` - `knowledge/vllm/architecture/scheduler-batching.md` - https://docs.vllm.ai/en/latest/performance/optimization.html",
+        "Use When": "Use when reasoning about why the same scheduler settings behave very differently on a small vs medium vs large model, when tuning per model size, or when asked whether scheduling can change a model's output."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "How The Scheduler Affects Models Of Different Sizes",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/architecture/vllm-architecture-overview",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/architecture/vllm-architecture-overview.md",
+      "ref": "knowledge:vllm/architecture/vllm-architecture-overview",
+      "related": [],
+      "sections": {
+        "Avoid": "- Assuming V0 internals; confirm you are on V1 (default). `VLLM_USE_V1=0` forces legacy V0 and is being removed. - Putting heavy per-request Python work on the hot path; it shows up as low GPU utilization.",
+        "Lesson": "vLLM is an inference engine for LLMs built around three ideas: **PagedAttention** (non-contiguous KV cache in fixed blocks), **continuous batching** (per-step admission of requests), and a clean separation between scheduling, model executio...",
+        "Related": "- `knowledge/vllm/architecture/paged-attention-kv-cache.md` - `knowledge/vllm/architecture/scheduler-batching.md` - `knowledge/vllm/architecture/attention-backends.md` - `knowledge/vllm/development/repo-layout-and-build.md`",
+        "Rules": "- To change *what runs when*, edit the scheduler (`vllm/v1/core/sched/`). - To change *how a model computes*, edit its file in `vllm/model_executor/models/` and/or the layers it uses. - To change *attention math/kernels*, work in the attent...",
+        "Source": "- `vllm/v1/` (engine core, scheduler, worker, executor, attention) - https://docs.vllm.ai/en/latest/design/arch_overview.html",
+        "Use When": "Use when you need a mental model of how vLLM is structured, where to add or change behavior, or how a request flows from API to GPU and back."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "vLLM Architecture Overview (V1 Engine)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/cuda/cuda-setup-and-tuning",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/cuda/cuda-setup-and-tuning.md",
+      "ref": "knowledge:vllm/cuda/cuda-setup-and-tuning",
+      "related": [],
+      "sections": {
+        "Avoid": "- Forcing FP8 on pre-Hopper hardware and expecting tensor-core speed. - Mixing a manually installed PyTorch/CUDA with a prebuilt vLLM wheel built for a different CUDA.",
+        "Lesson": "On NVIDIA, vLLM ships prebuilt CUDA wheels; `pip install vllm` (or `uv pip install vllm`) is the normal path. The platform layer `vllm/platforms/cuda.py` gates features on **compute capability** (SM): e.g. FP8 tensor cores need Hopper (SM90...",
+        "Related": "- `knowledge/vllm/architecture/attention-backends.md` - `knowledge/vllm/serving/quantization.md` - `knowledge/vllm/serving/environment-variables.md`",
+        "Rules": "- Verify the GPU's compute capability supports the kernel/dtype before forcing it (FP8 \u2192 Hopper/Ada; Marlin \u2192 Ampere+). - Keep CUDA graphs on in production; use `--enforce-eager` only to debug. - Record SM arch, CUDA/PyTorch/vLLM versions,...",
+        "Source": "- `vllm/platforms/cuda.py`, `Dockerfile` - https://docs.vllm.ai/en/latest/getting_started/installation/gpu/cuda.html",
+        "Use When": "Use when installing, running, or tuning vLLM on NVIDIA GPUs, choosing kernels for a compute capability, or debugging CUDA-specific backend/perf issues."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "CUDA Setup And Tuning",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/development/adding-a-model",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/development/adding-a-model.md",
+      "ref": "knowledge:vllm/development/adding-a-model",
+      "related": [],
+      "sections": {
+        "Avoid": "- Writing custom attention when an existing backend covers the model. - Skipping the HF-vs-vLLM logit A-B; \"looks fluent\" is not correctness.",
+        "Lesson": "A vLLM model is a PyTorch module that consumes the engine's batched inputs and KV cache and produces hidden states/logits. Most decoder LLMs reuse existing attention/MLP/MoE layers, so a new model is often a config-mapping + wiring job, not...",
+        "Related": "- `knowledge/vllm/architecture/vllm-architecture-overview.md` - `knowledge/vllm/development/custom-ops-and-platforms.md` - `tools/vllm/development/add-new-model.md`",
+        "Rules": "- Reuse vLLM layers (`Attention`, `RowParallelLinear`/`ColumnParallelLinear`, fused MoE) so TP/quantization/backends work for free. - Get the `load_weights` name mapping exactly right \u2014 silent mismaps produce garbage output, not errors. - V...",
+        "Source": "- `vllm/model_executor/models/` and `registry.py` - https://docs.vllm.ai/en/latest/contributing/model/",
+        "Use When": "Use when vLLM reports an unsupported architecture, or you must implement/port a new model into vLLM."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Adding A Model",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/development/codebase-map",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/development/codebase-map.md",
+      "ref": "knowledge:vllm/development/codebase-map",
+      "related": [],
+      "sections": {
+        "Avoid": "- Hardcoding `vllm/v1/...` advice for a user on 0.7.x (those paths do not exist there). - Letting the generated `registry/vllm-codemap-by-version.json` drift; `validate` warns when it is stale.",
+        "Lesson": "You rarely need to read the whole repo. Most vLLM work maps to one of ~30 areas, each with a small set of folders/files and entry symbols. The catch: paths are **version-dependent**. The biggest shift is the **V0 \u2192 V1 engine** relocation (V...",
+        "Related": "- `knowledge/vllm/development/repo-layout-and-build.md` - `knowledge/vllm/architecture/vllm-architecture-overview.md` - `devmap/vllm-areas.jsonl`, `devmap/vllm-versions.json`",
+        "Rules": "- Always pass `-V <version>` when developing against a pinned vLLM; the default is `latest` (V1) and will mislead on older checkouts. - Treat the map as a **starting point**, then confirm against the actual checkout (`git grep`, `ls`); a fi...",
+        "Source": "- `devmap/vllm-areas.jsonl` (version-tagged), `scripts/yax.py` (`where` command) - vLLM repo; https://docs.vllm.ai/en/latest/design/",
+        "Use When": "Use when you have a vLLM problem or change in mind and need to know **which folders to check and which files to edit** \u2014 fast, like an engineer who has worked in the tree before. Especially use it when developing on a specific vLLM **versio..."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "vLLM Codebase Map (Experienced-Dev Routing)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/development/contributing-and-testing",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/development/contributing-and-testing.md",
+      "ref": "knowledge:vllm/development/contributing-and-testing",
+      "related": [],
+      "sections": {
+        "Avoid": "- Pushing without running pre-commit (CI will fail on format/lint). - Claiming a perf win without a reproducible benchmark and recorded environment.",
+        "Lesson": "vLLM enforces formatting/linting via pre-commit and runs a large pytest suite in CI. Match local checks to CI to avoid red builds. ### Format / Lint - Install hooks once: `pip install pre-commit && pre-commit install`. - Run on demand: `pre...",
+        "Related": "- `knowledge/vllm/development/repo-layout-and-build.md` - `knowledge/vllm/serving/performance-tuning.md` - `tools/vllm/serving/benchmark-serving.md`",
+        "Rules": "- Run `pre-commit run --all-files` and the relevant `pytest` subset before pushing. - Provide evidence (test pass, benchmark, or accuracy A-B) \u2014 not just confidence. - Keep the diff scoped; unrelated reformatting gets PRs rejected.",
+        "Source": "- vLLM `.pre-commit-config.yaml`, `tests/`, `pyproject.toml` - https://docs.vllm.ai/en/latest/contributing/overview.html",
+        "Use When": "Use before opening a vLLM PR or when running its tests/linters locally."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Contributing And Testing",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/development/custom-ops-and-platforms",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/development/custom-ops-and-platforms.md",
+      "ref": "knowledge:vllm/development/custom-ops-and-platforms",
+      "related": [],
+      "sections": {
+        "Avoid": "- Hard-coding `cuda` assumptions in shared layers; route through `vllm/platforms/`. - Landing a kernel with no fallback and no test against a reference.",
+        "Lesson": "### Custom Ops - C++/CUDA/HIP kernels live in `csrc/`, built by CMake (`CMakeLists.txt`) and bound into Python as `torch.ops`/the `_C` extension. ROCm builds the same sources hipified for HIP. - Triton kernels live in Python under `vllm/` (...",
+        "Related": "- `knowledge/vllm/architecture/attention-backends.md` - `knowledge/vllm/development/repo-layout-and-build.md` - `knowledge/vllm/rocm/rocm-setup-and-tuning.md`",
+        "Rules": "- Prefer Triton for portability when CUDA and ROCm must both work; reserve C++ kernels for cases that need them. - Always ship a `forward_native` fallback and a capability gate. - Make a new kernel disableable (so a regression can be bisect...",
+        "Source": "- `csrc/`, `vllm/platforms/`, `vllm/model_executor/custom_op.py` - https://docs.vllm.ai/en/latest/contributing/",
+        "Use When": "Use when adding/changing a CUDA/HIP/Triton kernel, exposing it to Python, or making a feature degrade correctly across CUDA, ROCm, and CPU."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Custom Ops And Platform Abstraction",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/development/repo-layout-and-build",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/development/repo-layout-and-build.md",
+      "ref": "knowledge:vllm/development/repo-layout-and-build",
+      "related": [],
+      "sections": {
+        "Avoid": "- Running a full CUDA/ROCm compile just to edit Python. - Editing in `site-packages` instead of an editable checkout.",
+        "Lesson": "### Directory Map (top level) - `vllm/` \u2014 the Python package: - `vllm/v1/` \u2014 the V1 engine: `engine/`, `core/` (scheduler, KV cache), `worker/`, `executor/`, `attention/`. - `vllm/engine/` \u2014 `arg_utils.py` (all engine args), legacy engine g...",
+        "Related": "- `knowledge/vllm/development/adding-a-model.md` - `knowledge/vllm/development/custom-ops-and-platforms.md` - `knowledge/vllm/development/contributing-and-testing.md` - `knowledge/vllm/architecture/vllm-architecture-overview.md`",
+        "Rules": "- Use `VLLM_USE_PRECOMPILED=1 pip install -e .` for Python-only changes; reserve the full compile for `csrc/` work. - Match the source checkout's expected PyTorch/CUDA(ROCm) versions; mismatches cause import/ABI errors. - Find behavior by l...",
+        "Source": "- vLLM repo root; https://docs.vllm.ai/en/latest/contributing/ - https://docs.vllm.ai/en/latest/getting_started/installation/",
+        "Use When": "Use when you need to find where code lives or build/install vLLM from source to make changes."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Repo Layout And Build",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/rocm/rocm-fp8-formats",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/rocm/rocm-fp8-formats.md",
+      "ref": "knowledge:vllm/rocm/rocm-fp8-formats",
+      "related": [],
+      "sections": {
+        "Avoid": "- Assuming an FP8 checkpoint is bit-portable across AMD and NVIDIA. - Comparing FP8 numerics across platforms without noting the format difference.",
+        "Lesson": "FP8 e4m3 has two incompatible encodings in practice: - **OCP e4m3** (`e4m3` / \"OCP FN\") \u2014 used on NVIDIA Hopper/Ada. Has inf/NaN representations in the standard OCP layout. - **fnuz e4m3** (`e4m3fnuz`, \"finite, no -0, unsigned-zero\") \u2014 used...",
+        "Related": "- `knowledge/vllm/serving/quantization.md` - `knowledge/vllm/rocm/rocm-setup-and-tuning.md`",
+        "Rules": "- When an FP8 model is correct on CUDA but wrong on ROCm (or vice versa), suspect the format (fnuz vs OCP) and the activation/KV scales before the model code. - Quantize/serve FP8 with the format native to the target GPU; rely on vLLM's con...",
+        "Source": "- `vllm/model_executor/layers/quantization/` (fp8 utils) - OCP FP8 spec; AMD CDNA FP8 (fnuz) docs",
+        "Use When": "Use when FP8 accuracy or throughput differs between AMD and NVIDIA, when porting an FP8 checkpoint, or when FP8 results look wrong only on ROCm."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "ROCm FP8 Formats (fnuz vs OCP)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/rocm/rocm-setup-and-tuning",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/rocm/rocm-setup-and-tuning.md",
+      "ref": "knowledge:vllm/rocm/rocm-setup-and-tuning",
+      "related": [],
+      "sections": {
+        "Avoid": "- Mixing a bare-metal ROCm with a PyTorch wheel built for a different ROCm. - Forcing a CUDA-only attention backend on ROCm. - Leaving `PYTORCH_TUNABLEOP_TUNING=1` on in production (re-tunes every start).",
+        "Lesson": "vLLM supports ROCm via HIP. The platform layer `vllm/platforms/rocm.py` selects ROCm kernels and backends. The reliable path is the official ROCm Docker image (`Dockerfile.rocm`) which pins ROCm, PyTorch-ROCm, FlashAttention, AITER, and hip...",
+        "Related": "- `knowledge/vllm/rocm/rocm-fp8-formats.md` - `knowledge/vllm/architecture/attention-backends.md` - `knowledge/vllm/serving/environment-variables.md`",
+        "Rules": "- Pin and record ROCm, PyTorch-ROCm, FlashAttention/AITER/hipBLASLt versions with every result; ROCm regressions are usually version-coupled. - Bisect AITER and TunableOp with their per-op / on-off switches when chasing a regression. - Trea...",
+        "Source": "- `vllm/platforms/rocm.py`, `Dockerfile.rocm` - https://docs.vllm.ai/en/latest/getting_started/installation/gpu/rocm.html - AITER: https://github.com/ROCm/aiter",
+        "Use When": "Use when building, running, or tuning vLLM on AMD GPUs (MI200/MI250/MI300, gfx90a/gfx942), or porting a CUDA setup to ROCm."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "ROCm Setup And Tuning",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/serving/engine-args-reference",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/serving/engine-args-reference.md",
+      "ref": "knowledge:vllm/serving/engine-args-reference",
+      "related": [],
+      "sections": {
+        "Avoid": "- Copying flag sets between vLLM versions without checking `--help`; names and defaults change (e.g. spec-decode moved to `--speculative-config`). - Setting `--enforce-eager` in production to \"be safe\" \u2014 it leaves throughput on the table; u...",
+        "Lesson": "All engine behavior is configured through `EngineArgs` (offline `LLM`) / `AsyncEngineArgs` (server). The CLI `vllm serve <model> --flag value` maps 1:1 to these. The canonical list is `vllm/engine/arg_utils.py`; always confirm with `vllm se...",
+        "Related": "- `knowledge/vllm/serving/environment-variables.md` - `knowledge/vllm/serving/performance-tuning.md` - `knowledge/vllm/serving/quantization.md` - `knowledge/vllm/architecture/scheduler-batching.md`",
+        "Rules": "- Start minimal: `vllm serve <model> -tp <gpus>`; add flags only to fix a measured problem. - Change one flag per experiment and benchmark it. - Memory problems \u2192 memory group; speed \u2192 batching + compilation; correctness \u2192 dtype / quantizat...",
+        "Source": "- `vllm/engine/arg_utils.py` - https://docs.vllm.ai/en/latest/serving/engine_args.html - https://docs.vllm.ai/en/latest/models/engine_args.html",
+        "Use When": "Use when launching `vllm serve` or constructing `LLM(...)` / `EngineArgs`, or when you need to know which flag controls memory, parallelism, batching, or a feature."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Engine Arguments Reference",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/serving/environment-variables",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/serving/environment-variables.md",
+      "ref": "knowledge:vllm/serving/environment-variables",
+      "related": [],
+      "sections": {
+        "Avoid": "- Leaving debug vars (`VLLM_TRACE_FUNCTION`, `NCCL_DEBUG=INFO`) on in production. - Forcing a backend/kernel env var that the GPU does not support, then blaming the model for the resulting error.",
+        "Lesson": "vLLM reads `VLLM_*` environment variables at process start. They override defaults that are not exposed (or not cleanly exposed) as engine args. External libraries (PyTorch, NCCL/RCCL, CUDA/HIP) add more knobs that affect vLLM. Set them bef...",
+        "Related": "- `knowledge/vllm/serving/engine-args-reference.md` - `knowledge/vllm/architecture/attention-backends.md` - `knowledge/vllm/rocm/rocm-setup-and-tuning.md` - `knowledge/vllm/cuda/cuda-setup-and-tuning.md`",
+        "Rules": "- Set env vars **before** `vllm serve`; many are read once at import/startup. - Record every non-default env var alongside any benchmark or bug report \u2014 they silently change kernels and numerics. - Prefer an engine arg when one exists; reac...",
+        "Source": "- `vllm/envs.py` (authoritative list + defaults) - https://docs.vllm.ai/en/latest/serving/env_vars.html",
+        "Use When": "Use when behavior must change without a code edit: selecting backends, tuning distributed/runtime, debugging, or switching CUDA vs ROCm acceleration. Env vars complement engine args; the canonical list is `vllm/envs.py`."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Environment Variables Reference",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/serving/features-overview",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/serving/features-overview.md",
+      "ref": "knowledge:vllm/serving/features-overview",
+      "related": [],
+      "sections": {
+        "Avoid": "- Assuming a feature flag exists with the same name across versions \u2014 verify with `vllm serve --help`.",
+        "Lesson": "vLLM is a full serving stack, not just a kernel. The major feature areas and how to enable them: ### Throughput / Memory Core - **Continuous batching** \u2014 always on (iteration-level scheduling). - **PagedAttention KV cache** \u2014 always on. - *...",
+        "Related": "- `knowledge/vllm/serving/engine-args-reference.md` - `knowledge/vllm/serving/quantization.md` - `knowledge/vllm/development/adding-a-model.md`",
+        "Rules": "- Confirm a model is supported in `vllm/model_executor/models/registry.py` (or the supported-models docs) before debugging \"unsupported architecture\". - Feature availability is version-dependent; check the release notes for the installed ve...",
+        "Source": "- `vllm/model_executor/models/registry.py` - https://docs.vllm.ai/en/latest/features/ - https://docs.vllm.ai/en/latest/models/supported_models.html",
+        "Use When": "Use to check whether vLLM can do something today and which flag turns it on, before designing a workaround."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Feature Overview (What vLLM Supports)",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/serving/performance-tuning",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/serving/performance-tuning.md",
+      "ref": "knowledge:vllm/serving/performance-tuning",
+      "related": [],
+      "sections": {
+        "Avoid": "- `--gpu-memory-utilization` near 1.0 (mid-run OOM). - Chasing throughput knobs while decode P99 latency silently blows past target. - Comparing numbers across different backends/versions/GPUs.",
+        "Lesson": "Tune in a fixed order, measuring with `vllm bench serve` between changes. Define the target first: offline throughput, interactive latency, or memory fit. They pull in different directions. ### Measure First - Use `vllm bench serve` (or `be...",
+        "Related": "- `knowledge/vllm/architecture/scheduler-batching.md` - `knowledge/vllm/architecture/paged-attention-kv-cache.md` - `knowledge/vllm/serving/engine-args-reference.md` - `tools/vllm/serving/benchmark-serving.md`",
+        "Rules": "- Change one knob per run and re-benchmark; keep a small results table. - Fix correctness before performance; never tune around a numerical bug. - Record GPU arch, vLLM version, backend, and every non-default flag/env var with each result.",
+        "Source": "- `benchmarks/` in vllm; `vllm bench serve` - https://docs.vllm.ai/en/latest/performance/optimization.html",
+        "Use When": "Use when throughput is too low, latency (TTFT/ITL) too high, or you hit OOM / preemption and need a principled order of knobs instead of guessing."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Performance Tuning",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    },
+    {
+      "aliases": [],
+      "capabilities": [],
+      "engine": "vllm",
+      "id": "vllm/serving/quantization",
+      "kind": "knowledge",
+      "path": "knowledge/vllm/serving/quantization.md",
+      "ref": "knowledge:vllm/serving/quantization",
+      "related": [],
+      "sections": {
+        "Avoid": "- Stacking aggressive weight quant + FP8 KV without measuring quality. - Assuming `-q fp8` behaves identically on CUDA and ROCm (format differs).",
+        "Lesson": "Quantization trades a little accuracy for less memory and (often) more speed. vLLM detects most quantization from the checkpoint's config; `--quantization`/`-q` forces or selects a method/kernel. Three independent axes: 1. **Weights** (stor...",
+        "Related": "- `knowledge/vllm/serving/performance-tuning.md` - `knowledge/vllm/rocm/rocm-fp8-formats.md` - `knowledge/vllm/serving/engine-args-reference.md`",
+        "Rules": "- Always validate accuracy after quantizing (a small eval / A-B vs fp16). Treat KV FP8 and activation FP8 as separate risks. - Match the kernel to the GPU: Marlin needs Ampere+; FP8 wants Hopper/Ada/MI300. - Record method + kernel + GPU arc...",
+        "Source": "- `vllm/model_executor/layers/quantization/` - https://docs.vllm.ai/en/latest/features/quantization/",
+        "Use When": "Use when a model does not fit, you want more throughput, or you must serve a pre-quantized checkpoint. Covers weight, activation, and KV-cache quantization."
+      },
+      "tags": [
+        "vllm"
+      ],
+      "task": "",
+      "title": "Quantization",
+      "tools": [],
+      "tools_used": [],
+      "triggers": []
+    }
+  ],
+  "source": "knowledge markdown",
+  "version": "1.0.0"
+}

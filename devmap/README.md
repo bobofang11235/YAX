@@ -6,7 +6,7 @@ releases (vLLM V0→V1; SGLang pre/post-0.4). One code map per engine.
 
 ## Files
 
-Per engine `<engine>` in {`vllm`, `sglang`}:
+Per engine `<engine>` in {`vllm`, `sglang`, `atom`}:
 
 - `<engine>-areas.jsonl` — source of truth. One area per line:
   ```json
@@ -31,6 +31,7 @@ its area paths are best-effort and each links the authoritative `docs/` guide.
 ```bash
 python3 scripts/yax.py where "<problem>" --engine vllm  -V <version>   # default: latest
 python3 scripts/yax.py where "<problem>" --engine sglang -V 0.5.13
+python3 scripts/yax.py where "<problem>" --engine atom   -V 0.1.5
 python3 scripts/yax.py where --engine sglang --list-areas
 python3 scripts/yax.py index   # regenerates registry/<engine>-codemap-by-version.json
 ```
